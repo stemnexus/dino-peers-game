@@ -2,90 +2,164 @@
 <html lang="ms">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dino PEERS Game</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
+  <!-- ===== Header ===== -->
+  <header>
+    <span style="font-size:18px;">🦖 Dino PEERS Game</span>
 
-<header>
-  🦖 Dino PEERS Game
-</header>
-
-<div class="container">
-
-  <!-- ================= GAME AREA ================= -->
-  <div class="game-wrapper">
-    <div class="game-frame" id="gameFrame">
-
-      <!-- DINO -->
-      <div id="dino" class="dino"></div>
-
-      <!-- COIN -->
-      <div id="coin" class="coin" style="display:none;"></div>
-
-      <!-- OBSTACLE -->
-      <div id="obstacle" class="obstacle" style="display:none;"></div>
-
+    <div class="tiny">
+      <span class="pill" id="pillWorld">World: 1</span>
+      <span class="pill" id="pillScore">Score: 0</span>
+      <span class="pill" id="pillLives">Lives: 3</span>
     </div>
+  </header>
 
-    <div class="howto">
-      <strong>Cara Main</strong>
-      <ol>
-        <li>Isi <b>Nama</b> & <b>Kelas</b></li>
-        <li>Pilih <b>World</b> dan <b>Dino</b></li>
-        <li>Tekan <b>Start</b></li>
-        <li>Tekan <b>SPACE</b> untuk lompat</li>
-        <li>Ambil <b>Coin</b> → jawab soalan</li>
-      </ol>
-      <small>Tip: Jawab salah = nyawa berkurang</small>
+  <!-- ===== Main Layout ===== -->
+  <main class="container">
+
+    <!-- ===== Left: Game Card ===== -->
+    <section class="game-wrapper">
+      <div class="game-frame" id="gameFrame" aria-label="Game Area">
+
+        <!-- Background layers (CSS animate) -->
+        <div class="stars"></div>
+        <div class="nebula"></div>
+
+        <!-- HUD (inside frame) -->
+        <div class="hud" id="hud">
+          <div class="hudItem" id="hudPlayer"><b>Pemain:</b> -</div>
+          <div class="hudItem" id="hudScore"><b>Skor:</b> 0</div>
+          <div class="hudItem" id="hudLives"><b>Nyawa:</b> 3</div>
+          <div class="hudItem" id="hudQ"><b>Soalan:</b> 0/10</div>
+        </div>
+
+        <!-- Ground -->
+        <div class="ground"></div>
+
+        <!-- Entities injected by JS:
+             <div class="dino" id="dino"></div>
+             <div class="coin" id="coin"></div>
+             <div class="wall" id="wall"></div>
+             <div class="hole" id="hole"></div>
+        -->
+      </div>
+
+      <!-- How to -->
+      <div class="howto">
+        <strong>Cara Main</strong>
+        <ol>
+          <li>Isi <b>Nama</b> & <b>Kelas</b></li>
+          <li>Pilih <b>World</b> & <b>Dino</b></li>
+          <li>Tekan <b>Start</b></li>
+          <li>Tekan <b>SPACE</b> untuk lompat</li>
+          <li>Ambil <b>Coin</b> → jawab soalan untuk dapat markah</li>
+        </ol>
+        <small>Tip: Bila soalan keluar, game akan <b>pause</b> sampai jawab.</small>
+      </div>
+    </section>
+
+    <!-- ===== Right: Control Panel ===== -->
+    <aside class="panel">
+      <label for="nama">Nama</label>
+      <input id="nama" type="text" placeholder="Contoh: Maria" autocomplete="off"/>
+
+      <label for="kelas">Kelas</label>
+      <input id="kelas" type="text" placeholder="Contoh: 5 Intan" autocomplete="off"/>
+
+      <label for="worldSelect">World (Topik)</label>
+      <select id="worldSelect">
+        <option value="1">World 1: Penyalahgunaan Bahan</option>
+        <option value="2">World 2: Pengurusan Mental & Emosi</option>
+        <option value="3">World 3: Kekeluargaan</option>
+      </select>
+
+      <label>Pilih Dino</label>
+      <div class="dinoPick" id="dinoPick">
+        <button class="btn-dino active" data-dino="0" type="button">Hijau</button>
+        <button class="btn-dino" data-dino="1" type="button">Merah</button>
+        <button class="btn-dino" data-dino="2" type="button">Biru</button>
+        <button class="btn-dino" data-dino="3" type="button">Oren</button>
+      </div>
+
+      <div class="buttons">
+        <button class="btn-primary" id="btnStart" type="button">Start</button>
+        <button class="btn-secondary" id="btnReset" type="button">Reset</button>
+      </div>
+
+      <div style="margin-top:12px; font-size:13px; color: var(--muted); line-height:1.45;">
+        Bila game tamat, TP akan keluar & markah dihantar ke Google Sheets.
+      </div>
+
+      <!-- hidden config / debug -->
+      <div style="margin-top:12px; font-size:12px; opacity:.85;">
+        <div><b>Apps Script URL:</b></div>
+        <div id="appsUrlText" style="word-break:break-all;"></div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ===== Question Modal (PAUSE GAME) ===== -->
+  <div class="question-box" id="questionBox" role="dialog" aria-modal="true">
+    <div class="question-card">
+      <h3 id="qText">Soalan...</h3>
+      <div id="answersWrap">
+        <!-- answers injected by JS:
+        <button class="answer">...</button>
+        -->
+      </div>
+      <div style="margin-top:12px; display:flex; gap:10px;">
+        <button class="btn-secondary" id="btnSkip" type="button" style="flex:1;">Tutup</button>
+      </div>
+      <div style="margin-top:10px; font-size:12px; color: var(--muted);">
+        * Pilih jawapan. Betul = tambah skor. Salah = nyawa turun.
+      </div>
     </div>
   </div>
 
-  <!-- ================= SIDE PANEL ================= -->
-  <div class="panel">
-
-    <label>Nama</label>
-    <input id="nama" placeholder="Contoh: Maria">
-
-    <label>Kelas</label>
-    <input id="kelas" placeholder="Contoh: 5 Intan">
-
-    <label>World (Topik)</label>
-    <select id="world">
-      <option value="1">World 1: Penyalahgunaan Bahan</option>
-    </select>
-
-    <label>Pilih Dino</label>
-    <div>
-      <button class="btn-dino" onclick="selectDino(0)">Hijau</button>
-      <button class="btn-dino" onclick="selectDino(1)">Merah</button>
-      <button class="btn-dino" onclick="selectDino(2)">Biru</button>
-      <button class="btn-dino" onclick="selectDino(3)">Oren</button>
+  <!-- ===== Result Modal (TP output) ===== -->
+  <div class="question-box" id="resultBox" role="dialog" aria-modal="true">
+    <div class="question-card">
+      <h3 id="resultTitle">Misi Tamat!</h3>
+      <div id="resultBody" style="color:var(--muted); line-height:1.55;"></div>
+      <div style="margin-top:14px; display:flex; gap:10px;">
+        <button class="btn-primary" id="btnPlayAgain" type="button" style="flex:1;">Main Lagi</button>
+        <button class="btn-secondary" id="btnCloseResult" type="button" style="flex:1;">Tutup</button>
+      </div>
     </div>
-
-    <br>
-    <button class="btn-primary" onclick="startGame()">Start</button>
-    <button class="btn-secondary" onclick="resetGame()">Reset</button>
-
-    <p style="margin-top:10px;font-size:13px;">
-      Bila game tamat, TP akan keluar & markah dihantar ke Google Sheets.
-    </p>
-
   </div>
-</div>
 
-<!-- ================= QUESTION OVERLAY ================= -->
-<div class="question-box" id="questionBox">
-  <div class="question-card">
-    <h3 id="questionText">Soalan akan muncul di sini</h3>
+  <!-- ===== Script ===== -->
+  <script>
+    // letak config global supaya game.js boleh capai
+    window.PEERS_CONFIG = {
+      // URL kau:
+      APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxnc7GGOGRatTpGASWmLVbv79EP7gj0WLIx2wmXqZH1a0JJhf_sU1MmCe8Kvv2ObRzo/exec",
 
-    <div class="answer" onclick="answer(true)">Jawapan A</div>
-    <div class="answer" onclick="answer(false)">Jawapan B</div>
-    <div class="answer" onclick="answer(false)">Jawapan C</div>
-    <div class="answer" onclick="answer(false)">Jawapan D</div>
-  </div>
-</div>
+      // sprite sheet dino (kau dah upload assets/dino.png)
+      // NOTE: ini sekarang masih background putih. Nanti kita buat transparent baru cun.
+      DINO_SPRITE: "assets/dino.png",
 
-<script src="game.js"></script>
+      // setiap dino 64x64 (kalau sprite strip horizontal)
+      DINO_FRAME_W: 64,
+      DINO_FRAME_H: 64,
+
+      // soalan per world (nanti game.js akan isi/shuffle)
+      QUESTIONS_PER_WORLD: 10
+    };
+
+    // tunjuk URL kat panel (debug)
+    document.addEventListener("DOMContentLoaded", () => {
+      const el = document.getElementById("appsUrlText");
+      if (el) el.textContent = window.PEERS_CONFIG.APPS_SCRIPT_URL;
+    });
+  </script>
+
+  <script src="game.js"></script>
 </body>
 </html>
