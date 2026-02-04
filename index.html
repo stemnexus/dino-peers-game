@@ -7,32 +7,56 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="topbar">
-    <div class="title">Dino PEERS Game 🦖</div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🦖</span>
+      <span class="title">Dino PEERS Game</span>
+    </div>
     <div class="hud">
       <span id="hudWorld">World: 1</span>
       <span id="hudScore">Score: 0</span>
       <span id="hudLives">Lives: 3</span>
     </div>
-  </div>
+  </header>
 
-  <div class="wrap">
-    <div id="game" aria-label="Game Area">
-      <div id="dino" aria-label="Dino"></div>
-      <div id="ground" aria-hidden="true"></div>
-    </div>
+  <main class="wrap">
+    <section class="stage">
+      <div id="game" aria-label="Game Area">
+        <div class="bg sky"></div>
+        <div class="bg clouds"></div>
+        <div class="bg hills"></div>
+        <div class="ground"></div>
 
-    <div class="panel">
+        <div id="dino" class="dino dino-green" aria-label="Dino"></div>
+      </div>
+
+      <div class="howto">
+        <h3>Cara Main</h3>
+        <ol>
+          <li>Isi <b>Nama</b> & <b>Kelas</b></li>
+          <li>Pilih <b>World</b> dan <b>Dino</b></li>
+          <li>Tekan <b>Start</b></li>
+          <li>Tekan <b>SPACE</b> untuk lompat</li>
+          <li>Ambil <b>Coin</b> → jawab soalan untuk dapat markah</li>
+        </ol>
+        <div class="tip">Tip: Kalau jawab salah, nyawa akan turun.</div>
+      </div>
+    </section>
+
+    <aside class="panel">
       <div class="row">
         <label>Nama</label>
-        <input id="inpNama" placeholder="Contoh: Aisyah" />
+        <input id="inpNama" placeholder="Contoh: Maria" />
       </div>
+
       <div class="row">
         <label>Kelas</label>
         <input id="inpKelas" placeholder="Contoh: 5 Intan" />
       </div>
+
       <div class="row">
-        <label>World</label>
+        <label>World (Topik)</label>
         <select id="selWorld">
           <option value="1">World 1: Penyalahgunaan Bahan</option>
           <option value="2">World 2: Mental & Emosi</option>
@@ -40,30 +64,51 @@
         </select>
       </div>
 
+      <div class="row">
+        <label>Pilih Dino</label>
+        <div class="dinoPick">
+          <button class="pick active" data-dino="green" title="Dino Hijau">
+            <span class="thumb dino-green"></span>
+            <span>Hijau</span>
+          </button>
+
+          <button class="pick" data-dino="red" title="Dino Merah">
+            <span class="thumb dino-red"></span>
+            <span>Merah</span>
+          </button>
+
+          <button class="pick" data-dino="blue" title="Dino Biru">
+            <span class="thumb dino-blue"></span>
+            <span>Biru</span>
+          </button>
+
+          <button class="pick" data-dino="orange" title="Dino Oren">
+            <span class="thumb dino-orange"></span>
+            <span>Oren</span>
+          </button>
+        </div>
+      </div>
+
       <div class="row buttons">
         <button id="btnStart">Start</button>
         <button id="btnReset" class="ghost">Reset</button>
       </div>
 
-      <p class="hint">
-        Tekan <b>SPACE</b> untuk lompat. Ambil <b>coin</b> → jawab soalan untuk tenaga/markah.
-      </p>
       <p class="small">
-        Tip: Isi nama & kelas dulu supaya markah terus masuk Google Sheets.
+        Bila game tamat, TP akan keluar & markah dihantar ke Google Sheets.
       </p>
-    </div>
-  </div>
+    </aside>
+  </main>
 
   <!-- QUESTION MODAL -->
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modalCard">
       <div class="modalHead">
-        <div id="qTitle" class="qTitle">Soalan</div>
+        <div class="qTitle">Soalan</div>
         <div id="qWorldTag" class="tag">World 1</div>
       </div>
 
       <div id="qText" class="qText">...</div>
-
       <div class="options" id="qOptions"></div>
 
       <div class="modalFoot">
