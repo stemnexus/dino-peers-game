@@ -1,3 +1,95 @@
-<link rel="stylesheet" href="style.css">
-<script src="game.js"></script>
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dino PEERS Game</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div class="title">Dino PEERS Game 🦖</div>
+    <div class="hud">
+      <span id="hudWorld">World: 1</span>
+      <span id="hudScore">Score: 0</span>
+      <span id="hudLives">Lives: 3</span>
+    </div>
+  </div>
 
+  <div class="wrap">
+    <div id="game" aria-label="Game Area">
+      <div id="dino" aria-label="Dino"></div>
+      <div id="ground" aria-hidden="true"></div>
+    </div>
+
+    <div class="panel">
+      <div class="row">
+        <label>Nama</label>
+        <input id="inpNama" placeholder="Contoh: Aisyah" />
+      </div>
+      <div class="row">
+        <label>Kelas</label>
+        <input id="inpKelas" placeholder="Contoh: 5 Intan" />
+      </div>
+      <div class="row">
+        <label>World</label>
+        <select id="selWorld">
+          <option value="1">World 1: Penyalahgunaan Bahan</option>
+          <option value="2">World 2: Mental & Emosi</option>
+          <option value="3">World 3: Kekeluargaan</option>
+        </select>
+      </div>
+
+      <div class="row buttons">
+        <button id="btnStart">Start</button>
+        <button id="btnReset" class="ghost">Reset</button>
+      </div>
+
+      <p class="hint">
+        Tekan <b>SPACE</b> untuk lompat. Ambil <b>coin</b> → jawab soalan untuk tenaga/markah.
+      </p>
+      <p class="small">
+        Tip: Isi nama & kelas dulu supaya markah terus masuk Google Sheets.
+      </p>
+    </div>
+  </div>
+
+  <!-- QUESTION MODAL -->
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modalCard">
+      <div class="modalHead">
+        <div id="qTitle" class="qTitle">Soalan</div>
+        <div id="qWorldTag" class="tag">World 1</div>
+      </div>
+
+      <div id="qText" class="qText">...</div>
+
+      <div class="options" id="qOptions"></div>
+
+      <div class="modalFoot">
+        <div id="qFeedback" class="feedback"></div>
+        <button id="btnSubmit" disabled>Hantar Jawapan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT MODAL -->
+  <div id="result" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modalCard">
+      <div class="modalHead">
+        <div class="qTitle">Keputusan</div>
+        <div class="tag">TP</div>
+      </div>
+
+      <div id="resultText" class="qText"></div>
+
+      <div class="modalFoot">
+        <div class="feedback"></div>
+        <button id="btnCloseResult">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
