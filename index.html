@@ -4,246 +4,252 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Dino PEERS Game</title>
+
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-  <!-- BACKGROUND LAYER -->
-  <div class="bg-space"></div>
-  <div class="bg-vignette"></div>
-
-  <!-- TOP BAR -->
+  <!-- Top Bar -->
   <header class="topbar">
     <div class="brand">
-      <span class="brandDot"></span>
-      <span class="brandTitle">Dino <b>PEERS</b> Game</span>
-      <span class="chip chipSoft">HTML • CSS • JS</span>
+      <span class="brand__icon" aria-hidden="true">🦖</span>
+      <div class="brand__text">
+        <div class="brand__title">Dino <b>PEERS</b> Game</div>
+        <div class="brand__sub">Game-based assessment (Coin → Soalan → Markah)</div>
+      </div>
     </div>
 
-    <div class="top-right">
-      <div class="pill">
-        <span class="miniLabel">World</span>
-        <b id="hudWorld">1</b>
-      </div>
-      <div class="pill">
-        <span class="miniLabel">Skor</span>
-        <b id="hudScore">0</b>
-      </div>
-      <div class="pill">
-        <span class="miniLabel">Nyawa</span>
-        <b id="hudLives">3</b>
-      </div>
-      <div class="pill">
-        <span class="miniLabel">Masa</span>
-        <b id="hudTime">00:00</b>
-      </div>
+    <div class="topchips">
+      <div class="chip"><span>World</span><b id="hudWorldTop">1</b></div>
+      <div class="chip"><span>Skor</span><b id="hudScoreTop">0</b></div>
+      <div class="chip"><span>Nyawa</span><b id="hudLivesTop">3</b></div>
+      <div class="chip"><span>Masa</span><b id="hudTimeTop">00:00</b></div>
     </div>
   </header>
 
+  <!-- Main Layout -->
   <main class="layout">
 
-    <!-- LEFT HUD (SPACE STYLE) -->
-    <aside class="panel leftPanel">
-      <div class="panelTitle">Status</div>
-
-      <div class="statCard">
-        <div class="statRow">
-          <span class="statIcon">👤</span>
-          <span class="statLabel">Pemain</span>
-          <b class="statValue" id="hudPlayer">—</b>
+    <!-- LEFT HUD (macam space game) -->
+    <aside class="hud">
+      <div class="hudcard">
+        <div class="hudrow">
+          <span class="hudlabel">👤 Pemain</span>
+          <b class="hudvalue" id="hudName">-</b>
         </div>
-
-        <div class="statRow">
-          <span class="statIcon">🏫</span>
-          <span class="statLabel">Kelas</span>
-          <b class="statValue" id="hudClass">—</b>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="statRow">
-          <span class="statIcon">🏆</span>
-          <span class="statLabel">Skor</span>
-          <b class="statValue" id="hudScore2">0</b>
-        </div>
-
-        <div class="statRow">
-          <span class="statIcon">❤️</span>
-          <span class="statLabel">Nyawa</span>
-          <b class="statValue" id="hudLives2">3</b>
-        </div>
-
-        <div class="statRow">
-          <span class="statIcon">🧩</span>
-          <span class="statLabel">Soalan</span>
-          <b class="statValue" id="hudQuestionCount">0/0</b>
-        </div>
-
-        <div class="statRow">
-          <span class="statIcon">⏱️</span>
-          <span class="statLabel">Masa</span>
-          <b class="statValue" id="hudTime2">00:00</b>
+        <div class="hudrow">
+          <span class="hudlabel">🏫 Kelas</span>
+          <b class="hudvalue" id="hudClass">-</b>
         </div>
       </div>
 
-      <div class="panelTitle">Kawalan</div>
-      <div class="helpCard">
-        <div class="helpLine"><span class="kbd">←</span><span class="kbd">→</span> Jalan kiri/kanan</div>
-        <div class="helpLine"><span class="kbd">SPACE</span> Lompat</div>
-        <div class="helpLine"><span class="kbd">P</span> Pause</div>
-        <div class="helpLine"><span class="kbd">R</span> Reset</div>
-        <div class="helpHint">Tip: Bila ambil coin, game akan <b>pause</b> dan soalan keluar.</div>
+      <div class="hudcard">
+        <div class="hudrow">
+          <span class="hudlabel">🏁 World</span>
+          <b class="hudvalue" id="hudWorld">1</b>
+        </div>
+        <div class="hudrow">
+          <span class="hudlabel">🏆 Skor</span>
+          <b class="hudvalue" id="hudScore">0</b>
+        </div>
+        <div class="hudrow">
+          <span class="hudlabel">❤️ Nyawa</span>
+          <b class="hudvalue" id="hudLives">3</b>
+        </div>
+        <div class="hudrow">
+          <span class="hudlabel">⏱️ Masa</span>
+          <b class="hudvalue" id="hudTime">00:00</b>
+        </div>
+        <div class="hudrow">
+          <span class="hudlabel">🧩 Soalan</span>
+          <b class="hudvalue" id="hudQCount">0/0</b>
+        </div>
       </div>
 
-      <div class="panelTitle">Audio</div>
-      <div class="soundRow">
-        <span>🔊 Bunyi</span>
-        <input id="soundToggle" type="checkbox" checked />
+      <div class="hudcard">
+        <div class="hudtitle">🎮 Kawalan</div>
+        <div class="hudhint">
+          <div><b>← →</b> : Gerak</div>
+          <div><b>SPACE</b> : Lompat</div>
+          <div><b>↓</b> : Slide (optional)</div>
+          <div><b>P</b> : Pause</div>
+        </div>
       </div>
-      <input id="soundVolume" class="range" type="range" min="0" max="100" value="60" />
+
+      <div class="hudcard">
+        <div class="hudtitle">📌 Cara Main</div>
+        <ol class="howto">
+          <li>Isi <b>Nama</b> & <b>Kelas</b></li>
+          <li>Pilih <b>World</b> & <b>Dino</b></li>
+          <li>Tekan <b>Start</b></li>
+          <li>Ambil <b>Coin</b> → <b>Soalan</b> akan keluar (game pause)</li>
+          <li>Jawab betul → skor naik, salah → nyawa turun</li>
+        </ol>
+        <div class="tip">Tip: Soalan akan <b>shuffle</b> & coin spawn ikut stage.</div>
+      </div>
     </aside>
 
-    <!-- CENTER GAME -->
-    <section class="gameStage">
-      <div class="stageFrame">
-        <canvas id="gameCanvas" width="960" height="460" aria-label="Dino canvas"></canvas>
+    <!-- CENTER GAME STAGE -->
+    <section class="stage">
+      <div class="stage__frame">
+        <!-- Canvas untuk game -->
+        <canvas id="gameCanvas" width="960" height="420"></canvas>
 
-        <!-- Tiny overlay badges inside stage -->
-        <div class="stageBadges">
-          <span class="badge" id="badgeMode">READY</span>
-          <span class="badge badgeSoft" id="badgeDino">Dino: Hijau</span>
+        <!-- Overlay text kecil (status) -->
+        <div class="stage__overlay">
+          <div class="badge" id="gameStatus">Tekan Start untuk mula</div>
+        </div>
+
+        <!-- Loading / paused curtain -->
+        <div class="curtain hidden" id="curtain">
+          <div class="curtain__box">
+            <div class="curtain__title" id="curtainTitle">PAUSE</div>
+            <div class="curtain__desc" id="curtainDesc">Tekan P untuk sambung</div>
+            <div class="curtain__actions">
+              <button class="btn btn--soft" id="btnResume">Sambung</button>
+              <button class="btn btn--danger" id="btnQuit">Tamat</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Mobile on-screen controls (optional) -->
-      <div class="mobileControls">
-        <button class="mBtn" id="btnLeft" aria-label="Kiri">←</button>
-        <button class="mBtn" id="btnJump" aria-label="Lompat">⤒</button>
-        <button class="mBtn" id="btnRight" aria-label="Kanan">→</button>
+      <!-- bawah canvas: mini log -->
+      <div class="logpanel">
+        <div class="logtitle">🗒️ Log</div>
+        <div class="log" id="logBox">
+          <div class="logline">Sedia…</div>
+        </div>
       </div>
     </section>
 
     <!-- RIGHT CONTROL PANEL -->
-    <aside class="panel rightPanel">
-      <div class="panelTitle">Maklumat Pemain</div>
+    <aside class="panel">
+      <div class="card">
+        <div class="card__title">Maklumat Pemain</div>
 
-      <label class="field">
-        <span>Nama</span>
-        <input id="inputName" type="text" placeholder="Contoh: Maria" autocomplete="off" />
-      </label>
+        <label class="field">
+          <span>Nama</span>
+          <input id="inputName" type="text" placeholder="Contoh: Maria" autocomplete="off" />
+        </label>
 
-      <label class="field">
-        <span>Kelas</span>
-        <input id="inputClass" type="text" placeholder="Contoh: 5 Intan" autocomplete="off" />
-      </label>
+        <label class="field">
+          <span>Kelas</span>
+          <input id="inputClass" type="text" placeholder="Contoh: 5 Intan" autocomplete="off" />
+        </label>
 
-      <label class="field">
-        <span>World (Topik)</span>
-        <select id="selectWorld">
-          <option value="1">World 1: Penyalahgunaan Bahan</option>
-          <option value="2">World 2: Kesihatan Mental</option>
-          <option value="3">World 3: Pemakanan Sihat</option>
-          <option value="4">World 4: Gaya Hidup Aktif</option>
-        </select>
-      </label>
+        <label class="field">
+          <span>World (Topik)</span>
+          <select id="selectWorld">
+            <option value="1">World 1: Penyalahgunaan Bahan</option>
+            <option value="2">World 2: Kesihatan Diri</option>
+            <option value="3">World 3: Gaya Hidup Sihat</option>
+          </select>
+        </label>
 
-      <div class="panelTitle">Pilih Dino</div>
+        <div class="divider"></div>
 
-      <!-- IMPORTANT: data-dino = 1..4 (match assets/dino1.png..dino4.png) -->
-      <div class="dinoPick" id="dinoPick">
-        <button class="pickBtn active" data-dino="1" type="button">Hijau</button>
-        <button class="pickBtn" data-dino="2" type="button">Oren</button>
-        <button class="pickBtn" data-dino="3" type="button">Merah</button>
-        <button class="pickBtn" data-dino="4" type="button">Ungu</button>
+        <div class="picktitle">Pilih Dino</div>
+
+        <!-- Dino picker: guna 4 PNG berasingan -->
+        <div class="dinoGrid" id="dinoGrid">
+          <button class="dinoBtn is-active" data-dino="dino1" id="pickDino1" type="button" aria-label="Dino 1 (Hijau)">
+            <img src="assets/dino1.png" alt="Dino 1" />
+            <span>Hijau</span>
+          </button>
+
+          <button class="dinoBtn" data-dino="dino2" id="pickDino2" type="button" aria-label="Dino 2 (Oren)">
+            <img src="assets/dino2.png" alt="Dino 2" />
+            <span>Oren</span>
+          </button>
+
+          <button class="dinoBtn" data-dino="dino3" id="pickDino3" type="button" aria-label="Dino 3 (Merah)">
+            <img src="assets/dino3.png" alt="Dino 3" />
+            <span>Merah</span>
+          </button>
+
+          <button class="dinoBtn" data-dino="dino4" id="pickDino4" type="button" aria-label="Dino 4 (Ungu)">
+            <img src="assets/dino4.png" alt="Dino 4" />
+            <span>Ungu</span>
+          </button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="btnrow">
+          <button class="btn btn--primary" id="btnStart" type="button">Start</button>
+          <button class="btn btn--soft" id="btnReset" type="button">Reset</button>
+        </div>
+
+        <div class="note">
+          Bila game tamat, TP akan keluar & markah boleh dihantar ke Google Sheets.
+        </div>
       </div>
 
-      <div class="panelTitle">Aksi</div>
-      <div class="btnRow">
-        <button id="btnStart" class="btn primary" type="button">Start</button>
-        <button id="btnPause" class="btn" type="button">Pause</button>
-        <button id="btnReset" class="btn danger" type="button">Reset</button>
-      </div>
-
-      <div class="note">
-        Bila game tamat, skor & TP akan dipaparkan.
-        (Hantar ke Google Sheets ikut code dalam <b>game.js</b>)
+      <div class="card mini">
+        <div class="mini__row">
+          <span class="mini__label">Dino dipilih</span>
+          <b class="mini__value" id="selectedDinoLabel">Hijau</b>
+        </div>
+        <div class="mini__row">
+          <span class="mini__label">Status</span>
+          <b class="mini__value" id="miniStatus">Idle</b>
+        </div>
       </div>
     </aside>
 
   </main>
 
-  <!-- QUESTION MODAL (CENTER POPUP, SPACE STYLE) -->
-  <div class="modal hidden" id="questionModal" role="dialog" aria-modal="true">
-    <div class="modalCard">
-      <div class="modalHeader">
-        <div>
-          <div class="modalTitle" id="qTitle">Soalan</div>
-          <div class="modalSub" id="qMeta">World 1 • Coin</div>
-        </div>
-        <button class="iconBtn" id="btnCloseQuestion" aria-label="Tutup">✕</button>
+  <!-- QUIZ MODAL (game WAJIB pause bila ni muncul) -->
+  <div class="modal hidden" id="quizModal" role="dialog" aria-modal="true" aria-labelledby="quizTitle">
+    <div class="modal__backdrop" id="quizBackdrop"></div>
+
+    <div class="modal__card">
+      <div class="modal__head">
+        <div class="modal__title" id="quizTitle">Soalan</div>
+        <button class="iconbtn" id="quizClose" aria-label="Tutup">✕</button>
       </div>
 
-      <div class="modalBody">
-        <div class="questionText" id="qText">—</div>
+      <div class="modal__body">
+        <div class="question" id="quizQuestion">...</div>
 
-        <div class="answers" id="qAnswers">
+        <div class="answers" id="quizAnswers">
           <!-- game.js akan inject button jawapan -->
         </div>
 
-        <div class="modalFooter">
-          <div class="miniNote" id="qHint">Pilih satu jawapan untuk sambung game.</div>
-          <div class="footerRight">
-            <span class="chip" id="qProgress">0/0</span>
-          </div>
-        </div>
+        <div class="modal__feedback" id="quizFeedback"></div>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn btn--soft" id="btnSkip" type="button">Skip</button>
+        <button class="btn btn--primary" id="btnNextQuestion" type="button">Next</button>
       </div>
     </div>
   </div>
 
   <!-- RESULT MODAL -->
-  <div class="modal hidden" id="resultModal" role="dialog" aria-modal="true">
-    <div class="modalCard">
-      <div class="modalHeader">
-        <div>
-          <div class="modalTitle">MISI SELESAI!</div>
-          <div class="modalSub" id="resultLine">—</div>
-        </div>
-        <button class="iconBtn" id="btnCloseResult" aria-label="Tutup">✕</button>
+  <div class="modal hidden" id="resultModal" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="modal__backdrop" id="resultBackdrop"></div>
+
+    <div class="modal__card">
+      <div class="modal__head">
+        <div class="modal__title" id="resultTitle">Misi Selesai!</div>
+        <button class="iconbtn" id="resultClose" aria-label="Tutup">✕</button>
       </div>
 
-      <div class="modalBody">
-        <div class="resultGrid">
-          <div class="resultItem">
-            <span>🏆 Skor Akhir</span>
-            <b id="resultScore">0</b>
-          </div>
-          <div class="resultItem">
-            <span>🧩 Soalan Dijawab</span>
-            <b id="resultAnswered">0</b>
-          </div>
-          <div class="resultItem">
-            <span>❤️ Nyawa Berbaki</span>
-            <b id="resultLives">0</b>
-          </div>
-          <div class="resultItem">
-            <span>⏱️ Masa</span>
-            <b id="resultTime">00:00</b>
-          </div>
-          <div class="resultItem wide">
-            <span>🎯 TP</span>
-            <b id="resultTP">—</b>
-          </div>
+      <div class="modal__body">
+        <div class="resultbox" id="resultBox">
+          <!-- game.js akan isi summary -->
         </div>
+      </div>
 
-        <div class="btnRow center">
-          <button id="btnPlayAgain" class="btn primary" type="button">Cuba Lagi</button>
-          <button id="btnGoHome" class="btn" type="button">Tutup</button>
-        </div>
+      <div class="modal__foot">
+        <button class="btn btn--soft" id="btnPlayAgain" type="button">Cuba Lagi</button>
+        <button class="btn btn--primary" id="btnExport" type="button">Hantar Markah</button>
       </div>
     </div>
   </div>
 
-  <!-- IMPORTANT: defer supaya button terus function -->
-  <script src="game.js" defer></script>
+  <!-- JS -->
+  <script defer src="game.js"></script>
 </body>
 </html>
