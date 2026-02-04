@@ -2,139 +2,90 @@
 <html lang="ms">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dino PEERS Game</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <header class="topbar">
-    <div class="brand">
-      <span class="logo">🦖</span>
-      <span class="title">Dino PEERS Game</span>
+<header>
+  🦖 Dino PEERS Game
+</header>
+
+<div class="container">
+
+  <!-- ================= GAME AREA ================= -->
+  <div class="game-wrapper">
+    <div class="game-frame" id="gameFrame">
+
+      <!-- DINO -->
+      <div id="dino" class="dino"></div>
+
+      <!-- COIN -->
+      <div id="coin" class="coin" style="display:none;"></div>
+
+      <!-- OBSTACLE -->
+      <div id="obstacle" class="obstacle" style="display:none;"></div>
+
     </div>
-    <div class="hud">
-      <span id="hudWorld">World: 1</span>
-      <span id="hudScore">Score: 0</span>
-      <span id="hudLives">Lives: 3</span>
-    </div>
-  </header>
 
-  <main class="wrap">
-    <section class="stage">
-      <div id="game" aria-label="Game Area">
-        <div class="bg sky"></div>
-        <div class="bg clouds"></div>
-        <div class="bg hills"></div>
-        <div class="ground"></div>
-
-        <div id="dino" class="dino dino-green" aria-label="Dino"></div>
-      </div>
-
-      <div class="howto">
-        <h3>Cara Main</h3>
-        <ol>
-          <li>Isi <b>Nama</b> & <b>Kelas</b></li>
-          <li>Pilih <b>World</b> dan <b>Dino</b></li>
-          <li>Tekan <b>Start</b></li>
-          <li>Tekan <b>SPACE</b> untuk lompat</li>
-          <li>Ambil <b>Coin</b> → jawab soalan untuk dapat markah</li>
-        </ol>
-        <div class="tip">Tip: Kalau jawab salah, nyawa akan turun.</div>
-      </div>
-    </section>
-
-    <aside class="panel">
-      <div class="row">
-        <label>Nama</label>
-        <input id="inpNama" placeholder="Contoh: Maria" />
-      </div>
-
-      <div class="row">
-        <label>Kelas</label>
-        <input id="inpKelas" placeholder="Contoh: 5 Intan" />
-      </div>
-
-      <div class="row">
-        <label>World (Topik)</label>
-        <select id="selWorld">
-          <option value="1">World 1: Penyalahgunaan Bahan</option>
-          <option value="2">World 2: Mental & Emosi</option>
-          <option value="3">World 3: Kekeluargaan</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <label>Pilih Dino</label>
-        <div class="dinoPick">
-          <button class="pick active" data-dino="green" title="Dino Hijau">
-            <span class="thumb dino-green"></span>
-            <span>Hijau</span>
-          </button>
-
-          <button class="pick" data-dino="red" title="Dino Merah">
-            <span class="thumb dino-red"></span>
-            <span>Merah</span>
-          </button>
-
-          <button class="pick" data-dino="blue" title="Dino Biru">
-            <span class="thumb dino-blue"></span>
-            <span>Biru</span>
-          </button>
-
-          <button class="pick" data-dino="orange" title="Dino Oren">
-            <span class="thumb dino-orange"></span>
-            <span>Oren</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="row buttons">
-        <button id="btnStart">Start</button>
-        <button id="btnReset" class="ghost">Reset</button>
-      </div>
-
-      <p class="small">
-        Bila game tamat, TP akan keluar & markah dihantar ke Google Sheets.
-      </p>
-    </aside>
-  </main>
-
-  <!-- QUESTION MODAL -->
-  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modalCard">
-      <div class="modalHead">
-        <div class="qTitle">Soalan</div>
-        <div id="qWorldTag" class="tag">World 1</div>
-      </div>
-
-      <div id="qText" class="qText">...</div>
-      <div class="options" id="qOptions"></div>
-
-      <div class="modalFoot">
-        <div id="qFeedback" class="feedback"></div>
-        <button id="btnSubmit" disabled>Hantar Jawapan</button>
-      </div>
+    <div class="howto">
+      <strong>Cara Main</strong>
+      <ol>
+        <li>Isi <b>Nama</b> & <b>Kelas</b></li>
+        <li>Pilih <b>World</b> dan <b>Dino</b></li>
+        <li>Tekan <b>Start</b></li>
+        <li>Tekan <b>SPACE</b> untuk lompat</li>
+        <li>Ambil <b>Coin</b> → jawab soalan</li>
+      </ol>
+      <small>Tip: Jawab salah = nyawa berkurang</small>
     </div>
   </div>
 
-  <!-- RESULT MODAL -->
-  <div id="result" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modalCard">
-      <div class="modalHead">
-        <div class="qTitle">Keputusan</div>
-        <div class="tag">TP</div>
-      </div>
+  <!-- ================= SIDE PANEL ================= -->
+  <div class="panel">
 
-      <div id="resultText" class="qText"></div>
+    <label>Nama</label>
+    <input id="nama" placeholder="Contoh: Maria">
 
-      <div class="modalFoot">
-        <div class="feedback"></div>
-        <button id="btnCloseResult">Tutup</button>
-      </div>
+    <label>Kelas</label>
+    <input id="kelas" placeholder="Contoh: 5 Intan">
+
+    <label>World (Topik)</label>
+    <select id="world">
+      <option value="1">World 1: Penyalahgunaan Bahan</option>
+    </select>
+
+    <label>Pilih Dino</label>
+    <div>
+      <button class="btn-dino" onclick="selectDino(0)">Hijau</button>
+      <button class="btn-dino" onclick="selectDino(1)">Merah</button>
+      <button class="btn-dino" onclick="selectDino(2)">Biru</button>
+      <button class="btn-dino" onclick="selectDino(3)">Oren</button>
     </div>
-  </div>
 
-  <script src="game.js"></script>
+    <br>
+    <button class="btn-primary" onclick="startGame()">Start</button>
+    <button class="btn-secondary" onclick="resetGame()">Reset</button>
+
+    <p style="margin-top:10px;font-size:13px;">
+      Bila game tamat, TP akan keluar & markah dihantar ke Google Sheets.
+    </p>
+
+  </div>
+</div>
+
+<!-- ================= QUESTION OVERLAY ================= -->
+<div class="question-box" id="questionBox">
+  <div class="question-card">
+    <h3 id="questionText">Soalan akan muncul di sini</h3>
+
+    <div class="answer" onclick="answer(true)">Jawapan A</div>
+    <div class="answer" onclick="answer(false)">Jawapan B</div>
+    <div class="answer" onclick="answer(false)">Jawapan C</div>
+    <div class="answer" onclick="answer(false)">Jawapan D</div>
+  </div>
+</div>
+
+<script src="game.js"></script>
 </body>
 </html>
