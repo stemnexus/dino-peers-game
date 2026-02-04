@@ -1,26 +1,30 @@
-// ===============================
-// CONFIG
-// ===============================
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxnc7GGOGRatTpGASWmLVbv79EP7gj0WLIx2wmXqZH1a0JJhf_sU1MmCe8Kvv2ObRzo/exec";
 
-const GAME_W = 900;        // logical width (not actual CSS width)
-const GROUND_Y = 20;       // bottom offset from game container
-const DINO_X = 70;
+const game = document.getElementById("game");
+const dino = document.getElementById("dino");
 
-const OBSTACLE_MIN_GAP = 800; // ms min gap
-const OBSTACLE_MAX_GAP = 1400;
+const hudWorld = document.getElementById("hudWorld");
+const hudScore = document.getElementById("hudScore");
+const hudLives = document.getElementById("hudLives");
 
-const COIN_MIN_GAP = 1800;
-const COIN_MAX_GAP = 2600;
+const inpNama = document.getElementById("inpNama");
+const inpKelas = document.getElementById("inpKelas");
+const selWorld = document.getElementById("selWorld");
+const btnStart = document.getElementById("btnStart");
+const btnReset = document.getElementById("btnReset");
 
-const JUMP_V = 12;
-const GRAVITY = 0.7;
+const modal = document.getElementById("modal");
+const qWorldTag = document.getElementById("qWorldTag");
+const qText = document.getElementById("qText");
+const qOptions = document.getElementById("qOptions");
+const qFeedback = document.getElementById("qFeedback");
+const btnSubmit = document.getElementById("btnSubmit");
 
-const MAX_LIVES = 3;
+const resultModal = document.getElementById("result");
+const resultText = document.getElementById("resultText");
+const btnCloseResult = document.getElementById("btnCloseResult");
 
-// ===============================
-// QUESTIONS (10 each world)
-// ===============================
+// ================= QUESTIONS =================
 const QUESTIONS = {
   1: [
     { q:"Apakah maksud penyalahgunaan bahan?", a:["Menggunakan bahan terlarang secara salah","Makan berlebihan setiap hari","Tidak bersenam","Tidur lewat malam"], c:0 },
@@ -60,69 +64,50 @@ const QUESTIONS = {
   ]
 };
 
-// ===============================
-// DOM
-// ===============================
-const game = document.getElementById("game");
-const dino = document.getElementById("dino");
+// ================= STATE =================
+const MAX_LIVES = 3;
+const GROUND = 90; // same as .ground height
+const DINO_FLOOR = GROUND;
 
-const hudWorld = document.getElementById("hudWorld");
-const hudScore = document.getElementById("hudScore");
-const hudLives = document.getElementById("hudLives");
+let isRunning = false;
+let pausedQ = false;
 
-const inpNama = document.getElementById("inpNama");
-const inpKelas = document.getElementById("inpKelas");
-const selWorld = document.getElementById("selWorld");
-const btnStart = document.getElementById("btnStart");
-const btnReset = document.getElementById("btnReset");
-
-const modal = document.getElementById("modal");
-const qTitle = document.getElementById("qTitle");
-const qWorldTag = document.getElementById("qWorldTag");
-const qText = document.getElementById("qText");
-const qOptions = document.getElementById("qOptions");
-const qFeedback = document.getElementById("qFeedback");
-const btnSubmit = document.getElementById("btnSubmit");
-
-const resultModal = document.getElementById("result");
-const resultText = document.getElementById("resultText");
-const btnCloseResult = document.getElementById("btnCloseResult");
-
-// ===============================
-// GAME STATE
-// ===============================
 let world = 1;
 let score = 0;
 let lives = MAX_LIVES;
 
-let isRunning = false;
-let isPausedForQuestion = false;
-
-let dinoY = GROUND_Y;
-let dinoVY = 0;
+let dinoY = DINO_FLOOR;
+let vy = 0;
 let onGround = true;
 
 let obstacles = [];
 let coins = [];
 
-let obstacleSpawnAt = 0;
-let coinSpawnAt = 0;
+let asked = {1:0,2:0,3:0};
+let worldScore = {1:0,2:0,3:0};
 
 let lastTime = 0;
+let nextObsAt = 0;
+let nextCoinAt = 0;
 
-// per-world marks
-let worldScore = {1:0, 2:0, 3:0};
-let askedIndex = {1:0, 2:0, 3:0};
-
-// question temp
 let currentQuestion = null;
 let selectedOption = null;
-let coinToRemove = null;
+let coinHitRef = null;
 
-// ===============================
-// HELPERS
-// ===============================
-function rand(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+// ================= UI: PICK DINO =================
+const picks = document.querySelectorAll(".pick");
+picks.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    picks.forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+
+    const type = btn.dataset.dino; // green/red/blue/orange
+    dino.className = `dino dino-${type}`;
+  });
+});
+
+// ================= HELPERS =================
+const rand = (min,max)=> Math.floor(Math.random()*(max-min+1))+min;
 
 function setHUD(){
   hudWorld.textContent = `World: ${world}`;
@@ -130,40 +115,33 @@ function setHUD(){
   hudLives.textContent = `Lives: ${lives}`;
 }
 
-function resetState(){
-  score = 0;
-  lives = MAX_LIVES;
-
-  obstacles.forEach(o => o.el.remove());
-  coins.forEach(c => c.el.remove());
+function resetAll(){
+  // remove sprites
+  obstacles.forEach(o=>o.el.remove());
+  coins.forEach(c=>c.el.remove());
   obstacles = [];
   coins = [];
 
-  worldScore = {1:0, 2:0, 3:0};
-  askedIndex = {1:0, 2:0, 3:0};
+  world = Number(selWorld.value || "1");
+  score = 0;
+  lives = MAX_LIVES;
 
-  dinoY = GROUND_Y;
-  dinoVY = 0;
+  asked = {1:0,2:0,3:0};
+  worldScore = {1:0,2:0,3:0};
+
+  dinoY = DINO_FLOOR;
+  vy = 0;
   onGround = true;
   dino.style.bottom = `${dinoY}px`;
 
   lastTime = 0;
-  obstacleSpawnAt = 0;
-  coinSpawnAt = 0;
+  nextObsAt = 0;
+  nextCoinAt = 0;
 
-  isPausedForQuestion = false;
+  pausedQ = false;
   closeQuestion();
   closeResult();
-
   setHUD();
-}
-
-function getGameRect(){
-  return game.getBoundingClientRect();
-}
-
-function rectsHit(a, b){
-  return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
 }
 
 function createSprite(className){
@@ -175,71 +153,60 @@ function createSprite(className){
 
 function spawnObstacle(now){
   const el = createSprite("obstacle");
-  const obj = { el, x: GAME_W + 40, w: 26, h: 52, y: GROUND_Y };
+  const obj = { el, x: game.clientWidth + 80, w: 26, h: 52, y: DINO_FLOOR };
   el.style.left = `${obj.x}px`;
   el.style.bottom = `${obj.y}px`;
   obstacles.push(obj);
-
-  obstacleSpawnAt = now + rand(OBSTACLE_MIN_GAP, OBSTACLE_MAX_GAP);
+  nextObsAt = now + rand(700, 1200);
 }
 
 function spawnCoin(now){
   const el = createSprite("coin");
-  const y = rand(GROUND_Y + 70, GROUND_Y + 140);
-  const obj = { el, x: GAME_W + 40, w: 22, h: 22, y };
+  const y = rand(DINO_FLOOR + 90, DINO_FLOOR + 160);
+  const obj = { el, x: game.clientWidth + 80, w: 28, h: 28, y };
   el.style.left = `${obj.x}px`;
   el.style.bottom = `${obj.y}px`;
   coins.push(obj);
+  nextCoinAt = now + rand(1400, 2200);
+}
 
-  coinSpawnAt = now + rand(COIN_MIN_GAP, COIN_MAX_GAP);
+function hitRect(a,b){
+  return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
 }
 
 function jump(){
-  if (!isRunning || isPausedForQuestion) return;
+  if (!isRunning || pausedQ) return;
   if (!onGround) return;
   onGround = false;
-  dinoVY = JUMP_V;
+  vy = 13;
 }
 
-function gameOver(){
-  isRunning = false;
-  showResult(true);
-}
+document.addEventListener("keydown",(e)=>{
+  if(e.code==="Space") jump();
+});
 
-function nextWorld(){
-  if (world < 3){
-    world += 1;
-    setHUD();
-  }
-}
-
-// ===============================
-// QUESTION FLOW
-// ===============================
+// ================= QUESTIONS =================
 function openQuestion(qObj){
-  isPausedForQuestion = true;
+  pausedQ = true;
   currentQuestion = qObj;
   selectedOption = null;
   btnSubmit.disabled = true;
+
   qFeedback.textContent = "";
   qFeedback.className = "feedback";
 
-  qTitle.textContent = "Jawab untuk dapat tenaga!";
   qWorldTag.textContent = `World ${world}`;
   qText.textContent = qObj.q;
 
   qOptions.innerHTML = "";
-  qObj.a.forEach((txt, idx) => {
+  qObj.a.forEach((txt, idx)=>{
     const opt = document.createElement("label");
     opt.className = "opt";
-    opt.innerHTML = `
-      <input type="radio" name="ans" value="${idx}">
-      <div>${txt}</div>
-    `;
-    opt.addEventListener("click", () => {
+    opt.innerHTML = `<input type="radio" name="ans" value="${idx}"><div>${txt}</div>`;
+    opt.addEventListener("click", ()=>{
       selectedOption = idx;
       btnSubmit.disabled = false;
-      [...qOptions.querySelectorAll(".opt")].forEach(o => o.classList.remove("selected"));
+      [...qOptions.querySelectorAll(".opt")].forEach(o=>o.classList.remove("selected"));
       opt.classList.add("selected");
     });
     qOptions.appendChild(opt);
@@ -252,16 +219,15 @@ function closeQuestion(){
   modal.classList.add("hidden");
   currentQuestion = null;
   selectedOption = null;
-  coinToRemove = null;
-  isPausedForQuestion = false;
+  coinHitRef = null;
+  pausedQ = false;
 }
 
-btnSubmit.addEventListener("click", () => {
-  if (currentQuestion == null || selectedOption == null) return;
+btnSubmit.addEventListener("click", ()=>{
+  if(!currentQuestion || selectedOption===null) return;
 
   const correct = (selectedOption === currentQuestion.c);
-
-  if (correct){
+  if(correct){
     qFeedback.textContent = "Betul ✅ +10 markah";
     qFeedback.className = "feedback good";
     score += 10;
@@ -269,36 +235,31 @@ btnSubmit.addEventListener("click", () => {
   } else {
     qFeedback.textContent = "Salah ❌ -1 nyawa";
     qFeedback.className = "feedback bad";
-    lives -= 1;
+    lives = Math.max(0, lives - 1);
   }
-
   setHUD();
 
-  // remove coin (prevent re-trigger)
-  if (coinToRemove){
-    coinToRemove.el.remove();
-    coins = coins.filter(c => c !== coinToRemove);
+  if(coinHitRef){
+    coinHitRef.el.remove();
+    coins = coins.filter(x=>x!==coinHitRef);
   }
 
-  // auto close after short delay
-  setTimeout(() => {
+  setTimeout(()=>{
     closeQuestion();
-
-    if (lives <= 0){
-      gameOver();
+    if(lives<=0){
+      isRunning = false;
+      showResult(true);
       return;
     }
-
-    // if already answered enough in this world, allow next world
-    if (askedIndex[world] >= 10){
-      nextWorld();
+    // auto naik world bila cukup 10 soalan
+    if(asked[world] >= 10 && world < 3){
+      world++;
+      setHUD();
     }
-  }, 500);
+  }, 450);
 });
 
-// ===============================
-// RESULT + SUBMIT TO SHEETS
-// ===============================
+// ================= RESULT + SHEETS =================
 function kiraTP(percent){
   if (percent < 40) return "TP1";
   if (percent < 60) return "TP2";
@@ -308,18 +269,17 @@ function kiraTP(percent){
   return "TP6";
 }
 
-function showResult(isGameOver){
-  // compute percentage: max 30 soalan x 10 = 300
-  const max = 300;
-  const total = worldScore[1] + worldScore[2] + worldScore[3];
-  const percent = Math.round((total / max) * 100);
+function showResult(gameOver){
+  const max = 300; // 30 soalan x10
+  const total = worldScore[1]+worldScore[2]+worldScore[3];
+  const percent = Math.round((total/max)*100);
   const tp = kiraTP(percent);
 
-  const nama = (inpNama.value || "").trim() || "Tanpa Nama";
-  const kelas = (inpKelas.value || "").trim() || "Tanpa Kelas";
+  const nama = (inpNama.value||"").trim() || "Tanpa Nama";
+  const kelas = (inpKelas.value||"").trim() || "Tanpa Kelas";
 
   resultText.innerHTML = `
-    <b>${isGameOver ? "Game Over" : "Tamat!"}</b><br><br>
+    <b>${gameOver ? "Game Over" : "Tamat!"}</b><br><br>
     Nama: <b>${nama}</b><br>
     Kelas: <b>${kelas}</b><br><br>
     World 1: <b>${worldScore[1]}</b><br>
@@ -328,38 +288,23 @@ function showResult(isGameOver){
     Skor (%): <b>${percent}</b><br>
     Tahap Penguasaan: <b>${tp}</b>
   `;
-
   resultModal.classList.remove("hidden");
 
-  // send to Sheets (best effort)
-  hantarKeSheets(nama, kelas, worldScore[1], worldScore[2], worldScore[3], percent, tp);
-}
-
-function closeResult(){
-  resultModal.classList.add("hidden");
-}
-
-btnCloseResult.addEventListener("click", () => {
-  closeResult();
-});
-
-function hantarKeSheets(nama, kelas, w1, w2, w3, percent, tp){
-  const payload = { nama, kelas, world1: w1, world2: w2, world3: w3, skor: percent, tp };
-
-  // no-cors so browser won't block; apps script will still receive
-  fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+  // send (best effort)
+  fetch(APPS_SCRIPT_URL,{
+    method:"POST",
+    mode:"no-cors",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ nama, kelas, world1:worldScore[1], world2:worldScore[2], world3:worldScore[3], skor:percent, tp })
   }).catch(()=>{});
 }
 
-// ===============================
-// LOOP
-// ===============================
+function closeResult(){ resultModal.classList.add("hidden"); }
+btnCloseResult.addEventListener("click", closeResult);
+
+// ================= LOOP =================
 function loop(now){
-  if (!isRunning){
+  if(!isRunning){
     lastTime = now;
     requestAnimationFrame(loop);
     return;
@@ -368,23 +313,22 @@ function loop(now){
   const dt = Math.min(32, now - lastTime);
   lastTime = now;
 
-  // spawn
-  if (obstacleSpawnAt === 0) obstacleSpawnAt = now + 600;
-  if (coinSpawnAt === 0) coinSpawnAt = now + 1200;
+  if(nextObsAt===0) nextObsAt = now + 800;
+  if(nextCoinAt===0) nextCoinAt = now + 1200;
 
-  if (!isPausedForQuestion){
-    if (now >= obstacleSpawnAt) spawnObstacle(now);
-    if (now >= coinSpawnAt) spawnCoin(now);
+  if(!pausedQ){
+    if(now >= nextObsAt) spawnObstacle(now);
+    if(now >= nextCoinAt) spawnCoin(now);
   }
 
-  // dino physics
-  if (!isPausedForQuestion){
-    if (!onGround){
-      dinoVY -= GRAVITY;
-      dinoY += dinoVY;
-      if (dinoY <= GROUND_Y){
-        dinoY = GROUND_Y;
-        dinoVY = 0;
+  // physics
+  if(!pausedQ){
+    if(!onGround){
+      vy -= 0.7;
+      dinoY += vy;
+      if(dinoY <= DINO_FLOOR){
+        dinoY = DINO_FLOOR;
+        vy = 0;
         onGround = true;
       }
       dino.style.bottom = `${dinoY}px`;
@@ -392,63 +336,56 @@ function loop(now){
   }
 
   // move sprites
-  const speed = isPausedForQuestion ? 0 : (5 + world); // world 1 slow, world 3 faster
-  obstacles.forEach(o => {
+  const speed = pausedQ ? 0 : (5 + world);
+  obstacles.forEach(o=>{
     o.x -= speed;
     o.el.style.left = `${o.x}px`;
   });
-  coins.forEach(c => {
+  coins.forEach(c=>{
     c.x -= speed;
     c.el.style.left = `${c.x}px`;
   });
 
-  // cleanup
-  obstacles = obstacles.filter(o => o.x > -80);
-  coins = coins.filter(c => c.x > -80);
+  obstacles = obstacles.filter(o=>o.x>-120);
+  coins = coins.filter(c=>c.x>-120);
 
   // collisions
-  if (!isPausedForQuestion){
-    const gRect = getGameRect();
+  if(!pausedQ){
     const dRect = dino.getBoundingClientRect();
 
-    // obstacle hit -> lose life
-    for (const o of obstacles){
-      const oRect = o.el.getBoundingClientRect();
-      if (rectsHit(dRect, oRect)){
-        // remove obstacle to avoid repeated hit
+    // obstacle hit
+    for(const o of [...obstacles]){
+      const r = o.el.getBoundingClientRect();
+      if(hitRect(dRect,r)){
         o.el.remove();
-        obstacles = obstacles.filter(x => x !== o);
-
-        lives -= 1;
+        obstacles = obstacles.filter(x=>x!==o);
+        lives = Math.max(0, lives - 1);
         setHUD();
-
-        if (lives <= 0){
-          gameOver();
+        if(lives<=0){
+          isRunning = false;
+          showResult(true);
           break;
         }
       }
     }
 
     // coin hit -> question
-    for (const c of coins){
-      const cRect = c.el.getBoundingClientRect();
-      if (rectsHit(dRect, cRect)){
-        coinToRemove = c;
+    for(const c of [...coins]){
+      const r = c.el.getBoundingClientRect();
+      if(hitRect(dRect,r)){
+        coinHitRef = c;
 
-        // pick next question
-        const idx = askedIndex[world];
-        if (idx >= 10){
-          // if already complete, just give score and remove coin
+        const idx = asked[world];
+        if(idx >= 10){
+          // kalau dah habis soalan world tu, coin bagi score kecil je
           score += 2;
           worldScore[world] += 2;
           setHUD();
           c.el.remove();
-          coins = coins.filter(x => x !== c);
-
-          nextWorld();
+          coins = coins.filter(x=>x!==c);
         } else {
           const qObj = QUESTIONS[world][idx];
-          askedIndex[world] += 1;
+          asked[world] += 1;
           openQuestion(qObj);
         }
         break;
@@ -456,9 +393,9 @@ function loop(now){
     }
   }
 
-  // end condition: all worlds done + all questions answered
-  const allDone = askedIndex[1] >= 10 && askedIndex[2] >= 10 && askedIndex[3] >= 10;
-  if (isRunning && allDone){
+  // finish condition
+  const allDone = asked[1]>=10 && asked[2]>=10 && asked[3]>=10;
+  if(isRunning && allDone){
     isRunning = false;
     showResult(false);
   }
@@ -466,34 +403,19 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 
-// ===============================
-// EVENTS
-// ===============================
-document.addEventListener("keydown", (e) => {
-  if (e.code === "Space") jump();
-});
-
-btnStart.addEventListener("click", () => {
-  if (isRunning) return;
+// ================= BUTTONS =================
+btnStart.addEventListener("click", ()=>{
+  // force input? (optional)
   world = Number(selWorld.value || "1");
   setHUD();
   isRunning = true;
 });
 
-btnReset.addEventListener("click", () => {
+btnReset.addEventListener("click", ()=>{
   isRunning = false;
-  resetState();
+  resetAll();
 });
 
-function closeAllModalsIfClickOutside(e){
-  if (!modal.classList.contains("hidden")){
-    const card = modal.querySelector(".modalCard");
-    if (card && !card.contains(e.target)) { /* do nothing: force answer */ }
-  }
-}
-document.addEventListener("click", closeAllModalsIfClickOutside);
-
 // init
-resetState();
+resetAll();
 requestAnimationFrame(loop);
-
