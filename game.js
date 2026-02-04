@@ -1,56 +1,55 @@
 /*************************************************
- * DINO PEERS GAME - game.js (FIXED)
- * - Dino select buttons (Hijau/Merah/Biru/Oren) WORK
- * - Coin appears & moves
- * - Coin pickup triggers question modal (or alert fallback)
- * - Space jump
+ * DINO PEERS GAME (robust)
+ * Works with:
+ * - inline onclick="startGame()" "resetGame()" "selectDino(n)" "answer(i)"
+ * - OR buttons with ids btnStart/btnReset + dino buttons by text
  *************************************************/
 
-const GRAVITY = 0.65;
-const JUMP_POWER = 13;
-const GROUND_Y = 40;          // ikut style: ground lebih kurang 40px
-const SPEED_BASE = 4.2;       // laju asas
+// --------- helpers ----------
+const $ = (id) => document.getElementById(id);
+const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+const rand = (min,max)=>Math.floor(Math.random()*(max-min+1))+min;
 
-// ===== DOM (wajib ada dalam HTML) =====
-const game = document.getElementById("game");
-const dino = document.getElementById("dino");
+// --------- DOM fallback detect ----------
+function getGameFrame(){
+  return $("gameFrame") || $("game") || document.querySelector(".game-frame") || document.body;
+}
 
-const btnStart = document.getElementById("btnStart");
-const btnReset = document.getElementById("btnReset");
-const selWorld = document.getElementById("selWorld");
+function ensureElement(id, className, parent){
+  let el = $(id);
+  if(!el){
+    el = document.createElement("div");
+    el.id = id;
+    if(className) el.className = className;
+    parent.appendChild(el);
+  }
+  return el;
+}
 
-const hudWorld = document.getElementById("hudWorld");
-const hudScore = document.getElementById("hudScore");
-const hudLives = document.getElementById("hudLives");
-
-// ===== MODAL soalan (kalau ada) =====
-const modal = document.getElementById("modal");
-const qWorldTag = document.getElementById("qWorldTag");
-const qText = document.getElementById("qText");
-const qOptions = document.getElementById("qOptions");
-const qFeedback = document.getElementById("qFeedback");
-const btnSubmit = document.getElementById("btnSubmit");
-
-// ====== STATE ======
-let isRunning = false;
-let pausedQuestion = false;
+// --------- STATE ----------
+let running = false;
+let paused = false;
 
 let world = 1;
 let score = 0;
 let lives = 3;
 
-let dinoY = GROUND_Y;
+let dinoX = 80;
+let dinoY = 60;           // bottom offset in px
 let vy = 0;
 let onGround = true;
 
-let obstacles = [];
-let coins = [];
+let speed = 4.2;
+let lastT = 0;
 
-let lastTime = 0;
-let nextObstacleAt = 0;
-let nextCoinAt = 0;
+let coinX = 900;
+let coinY = 160;
+let coinActive = false;
 
-// ====== QUESTION BANK (sample dulu) ======
+let obstacleX = 1100;
+let obstacleActive = false;
+
+// --------- QUESTION BANK (sample dulu) ----------
 const QUESTIONS = {
   1: [
     { q:"Penyalahgunaan bahan boleh menyebabkan…", a:["Ketagihan","Lebih fokus","Lebih sihat","Tidur lena"], c:0 },
@@ -58,354 +57,294 @@ const QUESTIONS = {
   ],
   2: [
     { q:"Stres ialah…", a:["Tekanan mental/emosi","Penyakit gigi","Kecederaan","Masalah mata"], c:0 },
-    { q:"Cara urus stres yang betul…", a:["Rehat & dapatkan sokongan","Ponteng sekolah","Ambil bahan terlarang","Pendam sampai meletup"], c:0 },
+    { q:"Cara urus stres yang betul…", a:["Rehat & sokongan","Ponteng sekolah","Ambil bahan","Pendam sampai meletup"], c:0 },
   ],
   3: [
     { q:"Komunikasi keluarga penting untuk…", a:["Elak salah faham","Tambah konflik","Senyap selamanya","Membuli"], c:0 },
     { q:"Peranan remaja dalam keluarga ialah…", a:["Hormati & bantu","Tak peduli","Lawannya selalu","Buat hal sendiri"], c:0 },
-  ]
+  ],
 };
+let qIdx = {1:0,2:0,3:0};
+let currentQ = null;
 
-let qIndex = {1:0,2:0,3:0};
-let selectedOption = null;
-let currentQuestion = null;
-let coinRef = null;
+// --------- ELEMENTS ----------
+const frame = getGameFrame();
 
-// ====== DINO SPRITE CONTROL ======
-function setDino(color){
-  // pastikan class asas dino ada
-  dino.classList.add("dino");
+// dino / coin / obstacle
+const dino = ensureElement("dino", "dino", frame);
+const coin = ensureElement("coin", "coin", frame);
+const obstacle = ensureElement("obstacle", "obstacle", frame);
 
-  // buang semua warna
-  dino.classList.remove("dino-green","dino-red","dino-blue","dino-orange");
-
-  // add yang dipilih
-  dino.classList.add(`dino-${color}`);
+// question overlay (support 2 jenis: modal overlay OR simple)
+const qBox = ensureElement("questionBox", "question-box", document.body);
+let qCard = qBox.querySelector(".question-card");
+if(!qCard){
+  qCard = document.createElement("div");
+  qCard.className = "question-card";
+  qBox.appendChild(qCard);
+}
+let qText = qCard.querySelector("#questionText");
+if(!qText){
+  qText = document.createElement("h3");
+  qText.id = "questionText";
+  qCard.appendChild(qText);
 }
 
-// ====== PILIH DINO (ikut button text macam screenshot) ======
-function bindDinoButtons(){
-  // cari semua button dalam panel yang text dia Hijau/Merah/Biru/Oren
-  const allButtons = Array.from(document.querySelectorAll("button"));
-
-  const pickBtns = allButtons.filter(b => {
-    const t = (b.textContent || "").trim().toLowerCase();
-    return ["hijau","merah","biru","oren"].includes(t);
-  });
-
-  if (pickBtns.length === 0) return;
-
-  // default active style (optional)
-  function setActive(btn){
-    pickBtns.forEach(x => x.classList.remove("active"));
-    btn.classList.add("active");
-  }
-
-  pickBtns.forEach(btn=>{
-    btn.addEventListener("click", (e)=>{
-      e.preventDefault();
-      const t = (btn.textContent || "").trim().toLowerCase();
-      if (t === "hijau") setDino("green");
-      if (t === "merah") setDino("red");
-      if (t === "biru") setDino("blue");
-      if (t === "oren") setDino("orange");
-      setActive(btn);
-    });
-  });
-
-  // set default based on first button
-  setActive(pickBtns[0]);
+// answers container
+let ansWrap = qCard.querySelector(".answersWrap");
+if(!ansWrap){
+  ansWrap = document.createElement("div");
+  ansWrap.className = "answersWrap";
+  qCard.appendChild(ansWrap);
 }
 
-// ====== HUD ======
+// status HUD (kalau ada)
+const hudWorld = $("hudWorld");
+const hudScore = $("hudScore");
+const hudLives = $("hudLives");
+
+// input world (kalau ada)
+const selWorld = $("world") || $("selWorld");
+
+// --------- SPRITE IMAGE (single png) ----------
+dino.style.backgroundImage = `url("assets/dino.png")`;
+dino.style.left = dinoX + "px";
+dino.style.bottom = dinoY + "px";
+
+// hide coin/obstacle initially
+coin.style.display = "none";
+obstacle.style.display = "none";
+
+// --------- DINO COLOR via filter (sebab 1 file je) ----------
+const dinoFilters = [
+  "none",                                 // hijau (original)
+  "hue-rotate(120deg) saturate(1.2)",     // merah-ish
+  "hue-rotate(210deg) saturate(1.3)",     // biru-ish
+  "hue-rotate(40deg) saturate(1.4)"       // oren-ish
+];
+let dinoPick = 0;
+
+// --------- UI update ----------
 function updateHUD(){
   if (hudWorld) hudWorld.textContent = `World: ${world}`;
   if (hudScore) hudScore.textContent = `Score: ${score}`;
   if (hudLives) hudLives.textContent = `Lives: ${lives}`;
 }
 
-// ====== RESET GAME ======
-function resetGame(){
-  isRunning = false;
-  pausedQuestion = false;
-
-  world = Number(selWorld?.value || 1);
-  score = 0;
-  lives = 3;
-
-  dinoY = GROUND_Y;
-  vy = 0;
-  onGround = true;
-  dino.style.bottom = dinoY + "px";
-
-  // clear sprites
-  obstacles.forEach(o => o.el.remove());
-  coins.forEach(c => c.el.remove());
-  obstacles = [];
-  coins = [];
-
-  // timers
-  lastTime = 0;
-  nextObstacleAt = 0;
-  nextCoinAt = 0;
-
-  // reset question
-  qIndex = {1:0,2:0,3:0};
-  selectedOption = null;
-  currentQuestion = null;
-  coinRef = null;
-  closeQuestion();
-
-  updateHUD();
+// --------- collision ----------
+function rect(el){
+  const r = el.getBoundingClientRect();
+  return {l:r.left,t:r.top,r:r.right,b:r.bottom};
 }
-
-// ====== PHYSICS ======
-function jump(){
-  if (!isRunning || pausedQuestion) return;
-  if (!onGround) return;
-  onGround = false;
-  vy = JUMP_POWER;
-}
-
-document.addEventListener("keydown", (e)=>{
-  if (e.code === "Space") jump();
-});
-
-// ====== SPRITES ======
-function createSprite(className){
-  const el = document.createElement("div");
-  el.className = `sprite ${className}`;
-  game.appendChild(el);
-  return el;
-}
-
-function spawnObstacle(now){
-  const el = createSprite("obstacle");
-  const obj = {
-    el,
-    x: game.clientWidth + 50,
-    y: GROUND_Y,
-    speed: SPEED_BASE + world * 0.6
-  };
-  el.style.left = obj.x + "px";
-  el.style.bottom = obj.y + "px";
-  obstacles.push(obj);
-
-  nextObstacleAt = now + rand(900, 1400);
-}
-
-function spawnCoin(now){
-  const el = createSprite("coin");
-  const obj = {
-    el,
-    x: game.clientWidth + 50,
-    y: rand(GROUND_Y + 80, GROUND_Y + 140),
-    speed: SPEED_BASE + world * 0.6
-  };
-  el.style.left = obj.x + "px";
-  el.style.bottom = obj.y + "px";
-  coins.push(obj);
-
-  nextCoinAt = now + rand(1200, 1900);
-}
-
-function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
-
 function hit(a,b){
-  const r1 = a.getBoundingClientRect();
-  const r2 = b.getBoundingClientRect();
-  return !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
+  const A = rect(a), B = rect(b);
+  return !(A.r < B.l || A.l > B.r || A.b < B.t || A.t > B.b);
 }
 
-// ====== QUESTION MODAL ======
+// --------- spawn ----------
+function spawnCoin(){
+  const W = frame.clientWidth || 900;
+  coinX = W + rand(60, 200);
+  coinY = rand(120, 220);
+  coin.style.left = coinX + "px";
+  coin.style.bottom = coinY + "px";
+  coin.style.display = "block";
+  coinActive = true;
+}
+
+function spawnObstacle(){
+  const W = frame.clientWidth || 900;
+  obstacleX = W + rand(120, 240);
+  obstacle.style.left = obstacleX + "px";
+  obstacle.style.bottom = "60px";
+  obstacle.style.display = "block";
+  obstacleActive = true;
+}
+
+// --------- question ----------
 function openQuestion(){
-  // ambil soalan seterusnya
+  paused = true;
   const list = QUESTIONS[world] || [];
-  if (list.length === 0) {
-    alert("Tiada soalan untuk world ni lagi.");
-    pausedQuestion = false;
+  if(list.length === 0){
+    alert("Soalan untuk world ni belum dimasukkan.");
+    paused = false;
     return;
   }
+  const idx = qIdx[world] % list.length;
+  currentQ = list[idx];
+  qIdx[world]++;
 
-  const idx = qIndex[world] % list.length;
-  currentQuestion = list[idx];
-  qIndex[world]++;
-
-  pausedQuestion = true;
-  selectedOption = null;
-
-  // kalau modal tak wujud, fallback alert je
-  if (!modal || !qText || !qOptions || !btnSubmit) {
-    const ans = prompt(currentQuestion.q + "\n\n1) " + currentQuestion.a[0] + "\n2) " + currentQuestion.a[1] + "\n3) " + currentQuestion.a[2] + "\n4) " + currentQuestion.a[3]);
-    // simple marking (optional)
-    return;
-  }
-
-  if (qWorldTag) qWorldTag.textContent = `World ${world}`;
-  qText.textContent = currentQuestion.q;
-
-  qOptions.innerHTML = "";
-  currentQuestion.a.forEach((txt, i)=>{
-    const opt = document.createElement("label");
-    opt.className = "opt";
-    opt.innerHTML = `<input type="radio" name="ans" value="${i}"><div>${txt}</div>`;
-    opt.addEventListener("click", ()=>{
-      selectedOption = i;
-      btnSubmit.disabled = false;
-      [...qOptions.querySelectorAll(".opt")].forEach(o=>o.classList.remove("selected"));
-      opt.classList.add("selected");
-    });
-    qOptions.appendChild(opt);
+  // build UI
+  qText.textContent = currentQ.q;
+  ansWrap.innerHTML = "";
+  currentQ.a.forEach((txt,i)=>{
+    const btn = document.createElement("div");
+    btn.className = "answer";
+    btn.textContent = txt;
+    btn.onclick = ()=> answer(i);
+    ansWrap.appendChild(btn);
   });
 
-  if (qFeedback){
-    qFeedback.textContent = "";
-    qFeedback.className = "feedback";
-  }
-
-  btnSubmit.disabled = true;
-  modal.classList.remove("hidden");
+  qBox.style.display = "flex";
 }
 
 function closeQuestion(){
-  if (!modal) return;
-  modal.classList.add("hidden");
-  pausedQuestion = false;
-  currentQuestion = null;
-  selectedOption = null;
-  coinRef = null;
+  qBox.style.display = "none";
+  paused = false;
+  currentQ = null;
 }
 
-if (btnSubmit){
-  btnSubmit.addEventListener("click", ()=>{
-    if (!currentQuestion || selectedOption === null) return;
+// --------- GLOBAL FUNCTIONS (penting utk onclick) ----------
+window.selectDino = function(n){
+  dinoPick = clamp(Number(n||0), 0, 3);
+  dino.style.filter = dinoFilters[dinoPick];
 
-    const correct = selectedOption === currentQuestion.c;
-    if (correct){
-      score += 10;
-      if (qFeedback){
-        qFeedback.textContent = "Betul ✅ +10";
-        qFeedback.className = "feedback good";
-      }
-    } else {
-      lives = Math.max(0, lives - 1);
-      if (qFeedback){
-        qFeedback.textContent = "Salah ❌ -1 nyawa";
-        qFeedback.className = "feedback bad";
-      }
-    }
-    updateHUD();
+  // set active button UI kalau ada
+  document.querySelectorAll(".btn-dino").forEach(b=>b.classList.remove("active"));
+  const map = ["Hijau","Merah","Biru","Oren"];
+  const btn = [...document.querySelectorAll("button")].find(x => (x.textContent||"").trim() === map[dinoPick]);
+  if(btn) btn.classList.add("active");
+};
 
-    // buang coin yang trigger tadi (elak ulang)
-    if (coinRef){
-      coinRef.el.remove();
-      coins = coins.filter(c => c !== coinRef);
-    }
+window.startGame = function(){
+  // ambil world
+  world = Number(selWorld?.value || 1);
+  speed = 4.2 + (world-1)*0.6;
 
-    setTimeout(()=>{
-      closeQuestion();
+  // reset basic
+  score = 0;
+  lives = 3;
+  running = true;
+  paused = false;
 
-      if (lives <= 0){
-        isRunning = false;
-        alert("Game Over 😭");
-      }
-    }, 500);
-  });
-}
+  // reset positions
+  dinoX = 80;
+  dinoY = 60;
+  vy = 0;
+  onGround = true;
 
-// ====== LOOP ======
-function loop(now){
+  coinActive = false;
+  obstacleActive = false;
+  coin.style.display = "none";
+  obstacle.style.display = "none";
+
+  updateHUD();
+};
+
+window.resetGame = function(){
+  running = false;
+  paused = false;
+  score = 0;
+  lives = 3;
+  dinoY = 60;
+  vy = 0;
+  onGround = true;
+  coinActive = false;
+  obstacleActive = false;
+  coin.style.display = "none";
+  obstacle.style.display = "none";
+  closeQuestion();
+  updateHUD();
+};
+
+window.answer = function(i){
+  if(!currentQ) return;
+
+  const correct = (i === currentQ.c);
+  if(correct){
+    score += 10;
+  } else {
+    lives = Math.max(0, lives - 1);
+  }
+  updateHUD();
+  closeQuestion();
+
+  // after answer, remove coin
+  coinActive = false;
+  coin.style.display = "none";
+
+  if(lives <= 0){
+    running = false;
+    alert("Game Over 😭");
+  }
+};
+
+// space jump
+document.addEventListener("keydown",(e)=>{
+  if(e.code !== "Space") return;
+  if(!running || paused) return;
+  if(!onGround) return;
+  onGround = false;
+  vy = 13;
+});
+
+// --------- ALSO SUPPORT old buttons id ----------
+const btnStart = $("btnStart");
+if(btnStart) btnStart.onclick = ()=> window.startGame();
+const btnReset = $("btnReset");
+if(btnReset) btnReset.onclick = ()=> window.resetGame();
+
+// --------- MAIN LOOP ----------
+function loop(t){
   requestAnimationFrame(loop);
+  const dt = Math.min(35, t - lastT);
+  lastT = t;
 
-  if (!isRunning) {
-    lastTime = now;
-    return;
-  }
+  if(!running) return;
+  if(paused) return;
 
-  const dt = Math.min(40, now - lastTime);
-  lastTime = now;
-
-  // spawn schedule
-  if (nextObstacleAt === 0) nextObstacleAt = now + 900;
-  if (nextCoinAt === 0) nextCoinAt = now + 700;
-
-  if (!pausedQuestion){
-    if (now >= nextObstacleAt) spawnObstacle(now);
-    if (now >= nextCoinAt) spawnCoin(now);
-  }
-
-  // dino physics
-  if (!pausedQuestion){
-    if (!onGround){
-      vy -= GRAVITY;
-      dinoY += vy;
-
-      if (dinoY <= GROUND_Y){
-        dinoY = GROUND_Y;
-        vy = 0;
-        onGround = true;
-      }
-      dino.style.bottom = dinoY + "px";
+  // physics
+  if(!onGround){
+    vy -= 0.65;
+    dinoY += vy;
+    if(dinoY <= 60){
+      dinoY = 60;
+      vy = 0;
+      onGround = true;
     }
   }
+  dino.style.bottom = dinoY + "px";
 
-  // move sprites
-  const speedFactor = pausedQuestion ? 0 : 1;
+  // spawn logic
+  if(!coinActive && Math.random() < 0.015) spawnCoin();
+  if(!obstacleActive && Math.random() < 0.010) spawnObstacle();
 
-  obstacles.forEach((o, idx)=>{
-    o.x -= o.speed * speedFactor;
-    o.el.style.left = o.x + "px";
-
-    // collision
-    if (!pausedQuestion && hit(dino, o.el)){
-      o.el.remove();
-      obstacles.splice(idx,1);
-      lives = Math.max(0, lives - 1);
-      updateHUD();
-      if (lives <= 0){
-        isRunning = false;
-        alert("Game Over 😭");
-      }
+  // move coin
+  if(coinActive){
+    coinX -= speed;
+    coin.style.left = coinX + "px";
+    if(coinX < -80){
+      coinActive = false;
+      coin.style.display = "none";
     }
-  });
-
-  coins.forEach((c, idx)=>{
-    c.x -= c.speed * speedFactor;
-    c.el.style.left = c.x + "px";
-
-    if (!pausedQuestion && hit(dino, c.el)){
-      // set ref coin & trigger question
-      coinRef = c;
+    // pickup
+    if(hit(dino, coin)){
       openQuestion();
     }
-  });
+  }
 
-  // cleanup out of screen
-  obstacles = obstacles.filter(o => o.x > -120);
-  coins = coins.filter(c => c.x > -120);
-
-  // “run feel” (bagi dino nampak bergerak walau sprite static)
-  if (!pausedQuestion){
-    const bob = Math.sin(now / 120) * 1.2;
-    dino.style.transform = `translateY(${bob}px)`;
-  } else {
-    dino.style.transform = `translateY(0px)`;
+  // move obstacle
+  if(obstacleActive){
+    obstacleX -= speed;
+    obstacle.style.left = obstacleX + "px";
+    if(obstacleX < -80){
+      obstacleActive = false;
+      obstacle.style.display = "none";
+    }
+    if(hit(dino, obstacle)){
+      obstacleActive = false;
+      obstacle.style.display = "none";
+      lives = Math.max(0, lives - 1);
+      updateHUD();
+      if(lives <= 0){
+        running = false;
+        alert("Game Over 😭");
+      }
+    }
   }
 }
 
-// ====== BUTTONS ======
-btnStart?.addEventListener("click", ()=>{
-  resetGame();
-  isRunning = true;
-  updateHUD();
-});
-
-btnReset?.addEventListener("click", ()=>{
-  resetGame();
-});
-
-// ====== INIT ======
-setDino("green");
-bindDinoButtons();
-resetGame();
+// init
+window.selectDino(0);
+updateHUD();
 requestAnimationFrame(loop);
