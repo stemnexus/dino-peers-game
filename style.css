@@ -1,199 +1,353 @@
 /* ===============================
-   GLOBAL
+   DINO PEERS - SPACE NEON THEME
+   (Fix modal jadi betul + cantik)
 ================================ */
-*{
-  box-sizing: border-box;
-  font-family: 'Segoe UI', Arial, sans-serif;
+
+:root{
+  --bg1:#070b18;
+  --bg2:#0a1030;
+  --card: rgba(12, 18, 50, 0.72);
+  --line: rgba(95, 245, 255, 0.35);
+  --line2: rgba(95, 245, 255, 0.18);
+  --glow: rgba(95, 245, 255, 0.55);
+  --text:#e9f1ff;
+  --muted: rgba(233,241,255,.75);
+  --btn:#2b7cff;
+  --btn2:#0bd3ff;
+  --danger:#ff3b5c;
 }
 
+*{ box-sizing:border-box; font-family: system-ui, "Segoe UI", Arial, sans-serif; }
 body{
-  margin: 0;
-  background: linear-gradient(#b3e5fc, #e0f7fa);
+  margin:0;
+  color:var(--text);
+  background: radial-gradient(900px 500px at 20% 10%, #1b2d80, transparent 65%),
+              radial-gradient(700px 400px at 80% 20%, #5a2b9f, transparent 60%),
+              linear-gradient(160deg, var(--bg1), var(--bg2));
+  min-height: 100vh;
 }
 
-/* ===============================
-   TOP BAR
-================================ */
+/* ===== TOP BAR ===== */
 .topbar{
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 18px;
-  background: #ffffff;
-  border-bottom: 2px solid #e5e7eb;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  background: rgba(5,8,22,.55);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
-
-.title{
-  font-size: 18px;
-  font-weight: 700;
-}
-
+.brand{ display:flex; align-items:center; gap:10px; font-weight:900; letter-spacing:.3px; }
+.brand .logo{ font-size:20px; filter: drop-shadow(0 0 10px rgba(95,245,255,.25)); }
 .hud span{
-  margin-left: 10px;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-left:10px;
   padding: 6px 10px;
-  background: #f3f4f6;
-  border-radius: 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
   font-size: 13px;
 }
 
-/* ===============================
-   LAYOUT
-================================ */
+/* ===== LAYOUT ===== */
 .wrap{
-  max-width: 1100px;
-  margin: 20px auto;
+  max-width: 1200px;
+  margin: 18px auto;
   padding: 0 14px;
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 16px;
+  display:grid;
+  grid-template-columns: 1.35fr .65fr;
+  gap: 14px;
 }
 
-/* ===============================
-   GAME AREA
-================================ */
+/* ===== GAME CARD ===== */
+.stage{
+  display:flex;
+  flex-direction:column;
+  gap: 12px;
+}
+
 #game{
   position: relative;
-  height: 320px;
-  border-radius: 18px;
+  height: 360px;
+  border-radius: 22px;
   overflow: hidden;
-  border: 3px solid #111;
-  background: linear-gradient(#a5d8ff 65%, #7cb342 65%);
+  border: 2px solid var(--line2);
+  background: radial-gradient(700px 400px at 70% 25%, rgba(95,245,255,.10), transparent 60%),
+              radial-gradient(600px 350px at 30% 20%, rgba(43,124,255,.12), transparent 60%),
+              linear-gradient(180deg, rgba(2,6,23,.8), rgba(6,10,35,.9));
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06),
+              0 20px 50px rgba(0,0,0,.45);
 }
 
-/* Ground */
-#ground{
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 40px;
-  width: 100%;
-  background: repeating-linear-gradient(
-    -45deg,
-    #5d4037,
-    #5d4037 10px,
-    #6d4c41 10px,
-    #6d4c41 20px
-  );
+/* STAR FIELD */
+#game::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:
+    radial-gradient(2px 2px at 12% 18%, rgba(255,255,255,.7), transparent 60%),
+    radial-gradient(1px 1px at 22% 42%, rgba(255,255,255,.65), transparent 60%),
+    radial-gradient(1px 1px at 48% 26%, rgba(255,255,255,.55), transparent 60%),
+    radial-gradient(2px 2px at 68% 34%, rgba(255,255,255,.6), transparent 60%),
+    radial-gradient(1px 1px at 82% 18%, rgba(255,255,255,.55), transparent 60%),
+    radial-gradient(1px 1px at 76% 66%, rgba(255,255,255,.5), transparent 60%),
+    radial-gradient(2px 2px at 18% 78%, rgba(255,255,255,.5), transparent 60%);
+  opacity:.55;
+  animation: starDrift 10s linear infinite;
+  pointer-events:none;
+}
+@keyframes starDrift{
+  0%{ transform: translateX(0px); }
+  100%{ transform: translateX(-60px); }
 }
 
-/* ===============================
-   DINO SPRITE
-================================ */
+/* NEON GROUND */
+.ground{
+  position:absolute;
+  left:0; right:0;
+  bottom:0;
+  height: 92px;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.35)),
+    repeating-linear-gradient(90deg, rgba(11,211,255,.18) 0px, rgba(11,211,255,.18) 18px,
+                                   rgba(43,124,255,.12) 18px, rgba(43,124,255,.12) 36px);
+  border-top: 2px solid rgba(95,245,255,.20);
+  box-shadow: 0 -10px 30px rgba(11,211,255,.08);
+}
+
+/* ===== SPRITES ===== */
+.sprite{ position:absolute; image-rendering: pixelated; }
+
+/* DINO */
 #dino{
-  position: absolute;
-  left: 70px;
-  bottom: 40px;
-  width: 64px;
-  height: 64px;
+  position:absolute;
+  left: 86px;
+  bottom: 92px;          /* atas ground */
+  width: 92px;           /* BESARKAN */
+  height: 92px;
+  transform: translateZ(0);
 }
 
-/* sprite sheet */
 .dino{
   background-image: url("assets/dinos.png");
-  background-size: 200% 200%;
   background-repeat: no-repeat;
+  background-size: 200% 200%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.25));
 }
 
-/* sprite positions */
+/* Mapping 2x2 */
 .dino-green{ background-position: 0% 0%; }
 .dino-red{ background-position: 100% 0%; }
 .dino-blue{ background-position: 0% 100%; }
 .dino-orange{ background-position: 100% 100%; }
 
-/* ===============================
-   OBSTACLE & COIN
-================================ */
-.sprite{
-  position: absolute;
+/* "run feel" bila game jalan */
+.dino.running{
+  animation: runBob .35s ease-in-out infinite alternate;
+}
+@keyframes runBob{
+  from{ transform: translateY(0px); }
+  to{ transform: translateY(-2px); }
 }
 
+/* OBSTACLE */
 .obstacle{
   width: 26px;
-  height: 52px;
-  bottom: 40px;
-  background: #111827;
-  border-radius: 6px;
+  height: 62px;
+  bottom: 92px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.55));
+  box-shadow: 0 0 0 2px rgba(255,255,255,.12),
+              0 12px 25px rgba(0,0,0,.35);
 }
 
+/* COIN */
 .coin{
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #fff59d, #fbc02d);
-  box-shadow: 0 0 0 4px rgba(251,192,45,0.4);
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #ffd25a 45%, #ff9f0a);
+  box-shadow: 0 0 0 4px rgba(255,210,90,.18),
+              0 0 28px rgba(255,210,90,.22);
+  animation: coinPulse 1s ease-in-out infinite;
+}
+@keyframes coinPulse{
+  0%,100%{ transform: scale(1); }
+  50%{ transform: scale(1.08); }
 }
 
-/* ===============================
-   SIDE PANEL
-================================ */
+/* ===== HOWTO CARD ===== */
+.howto{
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px;
+  padding: 12px 14px;
+  backdrop-filter: blur(12px);
+}
+.howto h3{ margin:0 0 8px; font-size:14px; }
+.howto ol{ margin:0; padding-left:18px; color: rgba(233,241,255,.90); line-height:1.55; }
+.tip{ margin-top: 8px; color: var(--muted); font-size: 12px; }
+
+/* ===== PANEL (KANAN) ===== */
 .panel{
-  background: #ffffff;
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,.12);
   border-radius: 18px;
   padding: 14px;
-  border: 1px solid #e5e7eb;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.04);
 }
-
-.row{
-  margin-bottom: 12px;
-}
-
-.row label{
-  display: block;
-  font-size: 13px;
-  margin-bottom: 6px;
-  color: #374151;
-}
-
-.row input,
-.row select{
+.row{ margin-bottom: 12px; }
+.row label{ display:block; font-size:12px; color: var(--muted); margin-bottom: 6px; }
+.row input, .row select{
   width: 100%;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid #d1d5db;
-  font-size: 14px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  outline: none;
 }
+.row input::placeholder{ color: rgba(233,241,255,.45); }
 
-/* ===============================
-   BUTTONS
-================================ */
-.buttons{
-  display: flex;
+/* Dino pick buttons */
+.dinoPick{
+  display:flex;
+  flex-wrap:wrap;
   gap: 10px;
 }
-
-button{
+.dinoPick button{
+  border:none;
   padding: 10px 14px;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  font-weight: 700;
-  background: #2563eb;
-  color: white;
+  border-radius: 999px;
+  background: rgba(43,124,255,.25);
+  color: var(--text);
+  cursor:pointer;
+  font-weight: 800;
+  border: 1px solid rgba(95,245,255,.12);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.dinoPick button:hover{ transform: translateY(-1px); box-shadow: 0 0 0 2px rgba(95,245,255,.12); }
+.dinoPick button.active{
+  background: rgba(11,211,255,.25);
+  border-color: rgba(95,245,255,.35);
+  box-shadow: 0 0 30px rgba(95,245,255,.12);
 }
 
-button:hover{
-  background: #1d4ed8;
+.buttons{ display:flex; gap:10px; margin-top: 10px; }
+button{
+  border:none;
+  padding: 10px 14px;
+  border-radius: 14px;
+  cursor:pointer;
+  font-weight: 900;
+}
+#btnStart{
+  background: linear-gradient(180deg, var(--btn2), #2b7cff);
+  color: #04101a;
+  box-shadow: 0 10px 24px rgba(11,211,255,.10);
+}
+#btnReset{
+  background: rgba(255,255,255,.08);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,.14);
 }
 
-button.ghost{
-  background: #f3f4f6;
-  color: #111;
+/* ===== MODAL (INI YANG FIX SOALAN JADI MACAM GAME SPACE) ===== */
+.modal{
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0,0,0,.55);
+  z-index: 999;
+}
+.hidden{ display:none !important; }
+
+.modalCard{
+  width: min(760px, 95vw);
+  border-radius: 22px;
+  overflow: hidden;
+  background: rgba(10, 15, 40, 0.90);
+  border: 2px solid rgba(95,245,255,.25);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06),
+              0 0 60px rgba(95,245,255,.12);
 }
 
-button.ghost:hover{
-  background: #e5e7eb;
+.modalHead{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
 }
-
-/* ===============================
-   TEXT
-================================ */
-.hint{
-  margin-top: 10px;
-  font-size: 13px;
-  color: #4b5563;
-}
-
-.small{
+.qTitle{ font-weight: 1000; letter-spacing: .2px; }
+.tag{
   font-size: 12px;
-  color: #6b7280;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(95,245,255,.25);
+  background: rgba(95,245,255,.10);
+}
+
+.qText{
+  padding: 18px 16px 10px;
+  font-size: 20px;
+  font-weight: 900;
+  text-align:center;
+  color: rgba(233,241,255,.95);
+}
+
+.options{
+  padding: 8px 16px 16px;
+  display:grid;
+  gap: 12px;
+}
+.opt{
+  display:flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 14px;
+  border-radius: 16px;
+  border: 2px solid rgba(95,245,255,.18);
+  background: rgba(255,255,255,.05);
+  cursor: pointer;
+}
+.opt:hover{ border-color: rgba(95,245,255,.32); box-shadow: 0 0 0 2px rgba(95,245,255,.10); }
+.opt.selected{ border-color: rgba(95,245,255,.55); background: rgba(95,245,255,.10); }
+.opt input{ margin-top: 3px; }
+
+.modalFoot{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+
+.feedback{ font-size: 13px; color: var(--muted); }
+.feedback.good{ color: #34d399; font-weight: 900; }
+.feedback.bad{ color: var(--danger); font-weight: 900; }
+
+#btnSubmit{
+  background: linear-gradient(180deg, var(--btn2), #2b7cff);
+  color: #04101a;
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-weight: 1000;
+}
+#btnSubmit:disabled{ opacity:.55; cursor:not-allowed; }
+
+/* Responsive */
+@media (max-width: 920px){
+  .wrap{ grid-template-columns: 1fr; }
 }
