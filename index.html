@@ -5,201 +5,181 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dino PEERS Game</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* quick fallback kalau style.css tak load */
+    body{margin:0;background:#071226;color:#eaf6ff;font-family:system-ui,Segoe UI,Arial}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:14px}
+    .card{width:min(980px,100%);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px;overflow:hidden}
+    .top{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .title{font-weight:800}
+    .sub{opacity:.8;font-size:13px}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px;padding:14px}
+    @media(min-width:900px){.grid{grid-template-columns:360px 1fr}}
+    .panel{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:12px}
+    label{display:block;font-size:12px;opacity:.85;margin-top:10px;margin-bottom:6px}
+    input,select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);color:#eaf6ff;outline:none}
+    .btnrow{display:flex;gap:10px;margin-top:12px}
+    button{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);cursor:pointer;font-weight:700}
+    .primary{background:#2fa8ff;color:#04101e}
+    .ghost{background:rgba(255,255,255,.06);color:#eaf6ff}
+    .dinos{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+    .dinoCard{border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer}
+    .dinoCard.active{outline:2px solid rgba(47,168,255,.8)}
+    .dinoCard img{width:86px;height:86px;object-fit:contain}
+    .gameWrap{position:relative;width:100%;aspect-ratio:16/9;min-height:320px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden}
+    canvas{width:100%;height:100%;display:block}
+    /* Touch controls for mobile */
+    .touch{
+      position:absolute;left:12px;right:12px;bottom:12px;
+      display:flex;justify-content:space-between;gap:10px;pointer-events:none;
+    }
+    .pad{display:flex;gap:10px;pointer-events:none}
+    .tbtn{
+      width:58px;height:58px;border-radius:16px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.35);color:#fff;font-size:20px;font-weight:900;
+      display:flex;align-items:center;justify-content:center;
+      pointer-events:auto; user-select:none; -webkit-user-select:none; touch-action:none;
+    }
+    @media(min-width:900px){
+      .touch{display:none;}
+    }
+    /* Setup screen overlay */
+    .setupScreen{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,.35);backdrop-filter: blur(6px);
+    }
+    .setupBox{
+      width:min(520px,92vw);
+      background:rgba(10,18,35,.92);
+      border:1px solid rgba(90,200,255,.22);
+      border-radius:18px;
+      padding:16px;
+      box-shadow:0 0 28px rgba(60,200,255,.18);
+    }
+    .setupBox h2{margin:0 0 6px 0}
+    .setupBox p{margin:0 0 12px 0;opacity:.85;font-size:13px}
+    /* Question modal */
+    #questionModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:9999}
+    #questionCard{width:min(520px,92vw);background:rgba(10,18,35,.95);border:1px solid rgba(90,200,255,.25);border-radius:18px;padding:16px;box-shadow:0 0 28px rgba(60,200,255,.25)}
+    #questionText{font-weight:900;font-size:18px;margin-bottom:10px}
+    #answers{display:grid;gap:10px}
+    .ansBtn{padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#eaf6ff;text-align:left;font-weight:700;cursor:pointer}
+    .small{font-size:12px;opacity:.85;margin-top:10px}
+  </style>
 </head>
 
 <body>
-  <!-- TOPBAR -->
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand__icon">🦖</div>
-      <div>
-        <div class="brand__title">Dino PEERS Game</div>
-        <div class="brand__sub">Game-based assessment (Coin → Soalan → Markah)</div>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div>
+          <div class="title">Dino PEERS Game</div>
+          <div class="sub">Game-based assessment (Coin → Soalan → Markah)</div>
+        </div>
+        <div class="sub">
+          Skor: <span id="scoreVal">0</span> ·
+          Nyawa: <span id="livesVal">3</span> ·
+          Masa: <span id="timeVal">00:00</span> ·
+          Soalan: <span id="soalanCount">0/5</span> ·
+          Coin: <span id="coinCount">0</span>
+        </div>
       </div>
-    </div>
 
-    <div class="topchips">
-      <div class="chip"><span>World</span><b id="hudWorld">1</b></div>
-      <div class="chip"><span>Skor</span><b id="hudScore">0</b></div>
-      <div class="chip"><span>Nyawa</span><b id="hudLives">3</b></div>
-      <div class="chip"><span>Masa</span><b id="hudTime">00:00</b></div>
-    </div>
-  </header>
+      <div class="grid">
+        <!-- LEFT PANEL (optional on desktop) -->
+        <div class="panel">
+          <div style="font-weight:900;margin-bottom:6px;">Cara Main</div>
+          <div class="sub">
+            1) Isi Nama & Kelas<br/>
+            2) Pilih World & Dino<br/>
+            3) Tekan Start → masuk game<br/>
+            4) Gerak ← → , lompat SPACE (atau butang phone)<br/>
+            5) Ambil Coin → Soalan keluar (game pause)
+          </div>
 
-  <!-- MAIN LAYOUT -->
-  <main class="layout">
-
-    <!-- HUD LEFT -->
-    <aside class="hud">
-      <section class="hudcard">
-        <div class="hudtitle">Status</div>
-
-        <div class="hudrow">
-          <div class="hudlabel">Pemain</div>
-          <div class="hudvalue" id="hudPlayer">-</div>
+          <div style="height:10px"></div>
+          <div style="font-weight:900;margin-bottom:6px;">Log</div>
+          <div id="log" class="sub" style="max-height:160px;overflow:auto"></div>
         </div>
 
-        <div class="hudrow">
-          <div class="hudlabel">Soalan</div>
-          <div class="hudvalue"><span id="hudQDone">0</span>/<span id="hudQTotal">5</span></div>
-        </div>
+        <!-- GAME PANEL -->
+        <div class="panel">
+          <div class="gameWrap">
+            <canvas id="gameCanvas" width="1100" height="420"></canvas>
 
-        <div class="hudrow">
-          <div class="hudlabel">Coin</div>
-          <div class="hudvalue" id="hudCoin">0</div>
-        </div>
-      </section>
+            <!-- SETUP SCREEN -->
+            <div id="setupScreen" class="setupScreen">
+              <div class="setupBox">
+                <h2>READY?</h2>
+                <p>Pilih dino & world dulu. Lepas tu Start untuk mula main.</p>
 
-      <section class="hudcard hudhint">
-        <div class="hudtitle">Cara Main</div>
-        <ol class="howto">
-          <li>Isi <b>Nama</b> & <b>Kelas</b></li>
-          <li>Pilih <b>World</b> & <b>Dino</b></li>
-          <li>Tekan <b>Start</b></li>
-          <li>Tekan <b>← →</b> untuk bergerak</li>
-          <li>Tekan <b>SPACE</b> untuk lompat</li>
-          <li>Ambil <b>Coin</b> → jawab soalan</li>
-        </ol>
-        <div class="tip">Tip: Bila soalan keluar, game akan <b>pause</b> (lepas kita fix game.js nanti).</div>
-      </section>
+                <label>Nama</label>
+                <input id="nama" placeholder="Contoh: Maria" />
 
-      <section class="logpanel">
-        <div class="logtitle">Log</div>
-        <div class="log" id="log"></div>
-      </section>
-    </aside>
+                <label>Kelas</label>
+                <input id="kelas" placeholder="Contoh: 5 Intan" />
 
-    <!-- STAGE CENTER -->
-    <section class="stage">
-      <div class="stage__frame">
-        <canvas id="gameCanvas" width="960" height="420"></canvas>
+                <label>World (Topik)</label>
+                <select id="world">
+                  <option>World 1: Penyalahgunaan Bahan</option>
+                  <option>World 2: Kesihatan Mental</option>
+                  <option>World 3: Kekeluargaan</option>
+                </select>
 
-        <div class="stage__overlay">
-          <div class="badge" id="stageHint">Tekan Start untuk mula</div>
-        </div>
+                <div style="font-weight:900;margin-top:12px;">Pilih Dino</div>
+                <div class="dinos">
+                  <div class="dinoCard active" data-dino="hijau">
+                    <img src="assets/dino1.png" alt="Hijau">
+                    <div>Hijau</div>
+                  </div>
+                  <div class="dinoCard" data-dino="oren">
+                    <img src="assets/dino2.png" alt="Oren">
+                    <div>Oren</div>
+                  </div>
+                  <div class="dinoCard" data-dino="merah">
+                    <img src="assets/dino3.png" alt="Merah">
+                    <div>Merah</div>
+                  </div>
+                  <div class="dinoCard" data-dino="ungu">
+                    <img src="assets/dino4.png" alt="Ungu">
+                    <div>Ungu</div>
+                  </div>
+                </div>
 
-        <!-- Start curtain -->
-        <div class="curtain" id="curtain">
-          <div class="curtain__box">
-            <div class="curtain__title">READY?</div>
-            <div class="curtain__desc">
-              Pilih dino & tekan Start. Lepas tu gerak kiri/kanan, lompat, kutip coin.
+                <div class="btnrow">
+                  <button id="startBtn" class="primary" type="button">Start</button>
+                  <button id="resetBtn" class="ghost" type="button">Reset</button>
+                </div>
+
+                <div class="small">Tip: Phone akan dapat butang kiri/kanan/jump bila masuk game.</div>
+              </div>
             </div>
-            <div class="curtain__actions">
-              <button class="btn btn--primary" id="btnStart2">Start</button>
-              <button class="btn btn--soft" id="btnReset2">Reset</button>
+
+            <!-- TOUCH CONTROLS (mobile) -->
+            <div class="touch">
+              <div class="pad">
+                <div class="tbtn" id="btnLeft">←</div>
+                <div class="tbtn" id="btnRight">→</div>
+              </div>
+              <div class="tbtn" id="btnJump">⤒</div>
             </div>
           </div>
         </div>
       </div>
-
-      <div class="logpanel">
-        <div class="logtitle">Catatan</div>
-        <div class="log">
-          <p class="logline">Kalau UI jadi “besar/berterabur”, itu tanda <b>CSS tak load</b> atau <b>index lama</b> masih live.</p>
-          <p class="logline">Lepas commit, buat hard refresh: <b>Ctrl + Shift + R</b>.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- RIGHT PANEL -->
-    <aside class="panel">
-      <section class="card">
-        <div class="card__title">Maklumat Pemain</div>
-
-        <div class="field">
-          <span>Nama</span>
-          <input id="inpName" type="text" placeholder="Contoh: Maria" />
-        </div>
-
-        <div class="field">
-          <span>Kelas</span>
-          <input id="inpClass" type="text" placeholder="Contoh: 5 Intan" />
-        </div>
-
-        <div class="field">
-          <span>World (Topik)</span>
-          <select id="selWorld">
-            <option value="1">World 1: Penyalahgunaan Bahan</option>
-            <option value="2">World 2: Kesihatan Mental</option>
-            <option value="3">World 3: Pemakanan Sihat</option>
-          </select>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="picktitle">Pilih Dino</div>
-        <div class="dinoGrid" id="dinoGrid">
-          <!-- game.js akan set active class -->
-          <button class="dinoBtn is-active" data-dino="dino1">
-            <img src="assets/dino1.png" alt="Dino Hijau" />
-            <span>Hijau</span>
-          </button>
-
-          <button class="dinoBtn" data-dino="dino2">
-            <img src="assets/dino2.png" alt="Dino Oren" />
-            <span>Oren</span>
-          </button>
-
-          <button class="dinoBtn" data-dino="dino3">
-            <img src="assets/dino3.png" alt="Dino Merah" />
-            <span>Merah</span>
-          </button>
-
-          <button class="dinoBtn" data-dino="dino4">
-            <img src="assets/dino4.png" alt="Dino Ungu" />
-            <span>Ungu</span>
-          </button>
-        </div>
-
-        <div class="btnrow">
-          <button class="btn btn--primary" id="btnStart">Start</button>
-          <button class="btn btn--soft" id="btnReset">Reset</button>
-        </div>
-
-        <div class="note">
-          Bila game tamat, TP akan keluar & markah boleh dihantar ke Google Sheets (nanti kita sambung hook).
-        </div>
-      </section>
-
-      <section class="card mini">
-        <div class="mini__row">
-          <div class="mini__label">Dino dipilih</div>
-          <div class="mini__value" id="pickedDino">dino1</div>
-        </div>
-        <div class="mini__row">
-          <div class="mini__label">Status</div>
-          <div class="mini__value" id="miniStatus">Idle</div>
-        </div>
-      </section>
-    </aside>
-  </main>
-
-  <!-- QUIZ MODAL -->
-  <div class="modal hidden" id="quizModal">
-    <div class="modal__backdrop" id="quizBackdrop"></div>
-
-    <div class="modal__card">
-      <div class="modal__head">
-        <div class="modal__title">Soalan</div>
-        <button class="iconbtn" id="btnCloseQuiz" title="Tutup">✕</button>
-      </div>
-
-      <div class="modal__body">
-        <div class="question" id="qText">...</div>
-        <div class="answers" id="qAnswers">
-          <!-- game.js akan render jawapan -->
-        </div>
-        <div class="modal__feedback" id="qFeedback"></div>
-      </div>
-
-      <div class="modal__foot">
-        <button class="btn btn--soft" id="btnSkipQuiz">Skip</button>
-        <button class="btn btn--primary" id="btnNextQuiz">Next</button>
-      </div>
     </div>
   </div>
 
-  <script src="game.js"></script>
+  <!-- QUESTION MODAL -->
+  <div id="questionModal">
+    <div id="questionCard">
+      <div id="questionText">Soalan...</div>
+      <div id="answers"></div>
+      <div class="small">Salah = potong masa (−5s). Betul = +10 markah.</div>
+    </div>
+  </div>
+
+  <!-- IMPORTANT: defer -->
+  <script src="game.js" defer></script>
 </body>
 </html>
